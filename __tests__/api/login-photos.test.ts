@@ -8,6 +8,7 @@
  *  - CRUD lifecycle for both photo and text entries
  */
 import { describe, it, expect } from "vitest";
+import type { AuthRole } from "../helpers/auth-utils";
 import { GET, PUT, PATCH, DELETE } from "@/app/api/login-photos/route";
 import {
   makeAuthenticatedRequest,
@@ -28,8 +29,8 @@ function photosGet(cookies?: string) {
   return GET(req);
 }
 
-function photosPut(body: unknown, roles: string[] = ["admin"]) {
-  const req = makeAuthenticatedRequest("/api/login-photos", roles as any, { method: "PUT", body });
+function photosPut(body: unknown, roles: AuthRole[] = ["admin"]) {
+  const req = makeAuthenticatedRequest("/api/login-photos", roles, { method: "PUT", body });
   return PUT(req);
 }
 
@@ -38,8 +39,8 @@ function photosPatch(body: unknown) {
   return PATCH(req);
 }
 
-function photosDelete(body: unknown, roles: string[] = ["admin"]) {
-  const req = makeAuthenticatedRequest("/api/login-photos", roles as any, { method: "DELETE", body });
+function photosDelete(body: unknown, roles: AuthRole[] = ["admin"]) {
+  const req = makeAuthenticatedRequest("/api/login-photos", roles, { method: "DELETE", body });
   return DELETE(req);
 }
 

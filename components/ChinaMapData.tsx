@@ -1,6 +1,5 @@
-import { getChinaMapPaths, getDashLinePath, type MapPathData, type DashLinePathData } from "@/lib/geo-server";
+import { getChinaMapPaths, type MapPathData } from "@/lib/geo-server";
 import ChinaMap from "@/components/ChinaMap";
-import { SouthChinaSeaInset } from "@/components/ChinaMap";
 
 interface ChinaMapDataProps {
   width?: number;
@@ -10,7 +9,6 @@ interface ChinaMapDataProps {
 
 export default function ChinaMapData({ width = 1100, height = 860, className }: ChinaMapDataProps) {
   const mapPaths: MapPathData[] = getChinaMapPaths(width, height);
-  const dashLinePath: DashLinePathData = getDashLinePath();
 
   return (
     <>
@@ -19,7 +17,6 @@ export default function ChinaMapData({ width = 1100, height = 860, className }: 
         height={height}
         className={className}
         mapPaths={mapPaths}
-        dashLinePath={dashLinePath}
       />
     </>
   );

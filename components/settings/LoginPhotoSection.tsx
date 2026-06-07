@@ -3,7 +3,7 @@ import { Trash2, Upload } from "lucide-react";
 import { LocalPrivacyImage } from "@/components/LocalPrivacyImage";
 import type { LoginPhotoText } from "@/data/loginPhotoSlots";
 import { loginPhotoSlots } from "@/data/loginPhotoSlots";
-import { deleteLoginPhoto, deleteLoginPhotoText, readLoginPhotos, readLoginPhotoTexts, writeLoginPhoto, writeLoginPhotoText } from "@/data/loginPhotoStore";
+import { deleteLoginPhoto, deleteLoginPhotoText, readLoginPhotos, writeLoginPhoto, writeLoginPhotoText } from "@/data/loginPhotoStore";
 import { imageFileToSettingImage } from "./shared";
 
 type LoginPhotoSectionProps = {

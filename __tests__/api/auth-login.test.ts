@@ -8,7 +8,7 @@
  *  - Missing env vars (503)
  *  - Logout clears cookies
  */
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { describe, it, expect } from "vitest";
 import { POST, DELETE } from "@/app/api/auth/login/route";
 import { makeRequest } from "../helpers/auth-utils";
 

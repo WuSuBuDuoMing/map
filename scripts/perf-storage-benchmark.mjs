@@ -15,8 +15,8 @@
  * This script creates a temp directory and does NOT touch your real data files.
  */
 
-import { mkdir, readFile, writeFile, rm, access } from "node:fs/promises";
-import { existsSync, writeFileSync } from "node:fs";
+import { mkdir, readFile, writeFile, rm } from "node:fs/promises";
+import { writeFileSync } from "node:fs";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
 
@@ -117,7 +117,6 @@ async function benchmarkConcurrentWrites() {
 
     // 5 concurrent writers, each writing a unique key
     const writers = Array.from({ length: 5 }, (_, idx) => {
-      const data = JSON.stringify(makePayload(1).replace ? makePayload(1) : {});
       const store = {};
       store[`writer-${idx}`] = [{ id: `w${idx}`, text: `writer ${idx} data` }];
       return writeFile(filePath, JSON.stringify(store, null, 2), "utf8");

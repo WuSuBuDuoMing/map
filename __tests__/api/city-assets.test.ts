@@ -8,6 +8,7 @@
  *  - Edge cases
  */
 import { describe, it, expect } from "vitest";
+import type { AuthRole } from "../helpers/auth-utils";
 import { GET, PUT, PATCH, DELETE } from "@/app/api/city-assets/route";
 import {
   makeAuthenticatedRequest,
@@ -21,15 +22,15 @@ import { makeCityAssetPayload, randomCityId } from "../helpers/factories";
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-function assetsGet(roles?: string[]) {
+function assetsGet(roles?: AuthRole[]) {
   const req = roles
-    ? makeAuthenticatedRequest("/api/city-assets", roles as any)
+    ? makeAuthenticatedRequest("/api/city-assets", roles)
     : makeUnauthenticatedRequest("/api/city-assets");
   return GET(req);
 }
 
-function assetsPut(body: unknown, roles: string[] = ["admin"]) {
-  const req = makeAuthenticatedRequest("/api/city-assets", roles as any, { method: "PUT", body });
+function assetsPut(body: unknown, roles: AuthRole[] = ["admin"]) {
+  const req = makeAuthenticatedRequest("/api/city-assets", roles, { method: "PUT", body });
   return PUT(req);
 }
 

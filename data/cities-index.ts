@@ -1,4 +1,4 @@
-import { cities, type City } from "@/data/cities";
+import { cities } from "@/data/cities";
 
 export type CityIndex = {
   id: string;

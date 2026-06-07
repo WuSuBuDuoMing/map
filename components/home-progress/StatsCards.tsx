@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { CalendarDays, Heart, Images } from "lucide-react";
 import { LocalPrivacyImage } from "@/components/LocalPrivacyImage";
@@ -9,7 +9,6 @@ import {
   getLitCityIds,
   getLitProvinceIds,
 } from "@/data/progress";
-import type { LocalMemoryStore } from "@/data/progress";
 import { TOTAL_PROVINCES } from "@/data/provinces";
 import {
   appSettingsUpdatedEvent,

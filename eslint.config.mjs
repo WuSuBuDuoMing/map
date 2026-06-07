@@ -16,6 +16,15 @@ const eslintConfig = defineConfig([
     // Electron desktop wrapper runs in Node (CommonJS), not the Next.js app.
     "electron/**",
   ]),
+  // Relax rules for test files — tests commonly use `any` for mock data and
+  // `require()` for conditional imports (e.g. NextResponse in vitest).
+  {
+    files: ["__tests__/**/*.{ts,tsx}", "scripts/**/*.{mjs,cjs}"],
+    rules: {
+      "@typescript-eslint/no-explicit-any": "off",
+      "@typescript-eslint/no-require-imports": "off",
+    },
+  },
 ]);
 
 export default eslintConfig;

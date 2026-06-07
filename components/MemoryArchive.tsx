@@ -15,7 +15,6 @@ import {
   sortMemoriesByTime,
   type Memory,
 } from "@/data/memories";
-import type { LocalMemoryStore } from "@/data/progress";
 import { LocalPrivacyImage, LocalPrivacyImg } from "@/components/LocalPrivacyImage";
 import { useLocalMemories } from "@/hooks/useLocalMemories";
 import { isBrowserImageUrl } from "@/lib/imageUtils";

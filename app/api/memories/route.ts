@@ -11,7 +11,7 @@ import {
 import { isLocalPrivacyRequest, localPrivacyImagePlaceholder } from "@/lib/localPrivacy";
 import { requireAdminSession, requireSiteSession } from "@/lib/server/auth";
 import { getBundledDataFilePath, getPrivateDataFilePath } from "@/lib/server/dataDir";
-import { isRecord, isMemoryImage, imageMaxLength, assertSameOrigin } from "@/lib/server/validation";
+import { isRecord, isMemoryImage, assertSameOrigin } from "@/lib/server/validation";
 import { createJsonStore } from "@/lib/server/createJsonStore";
 import { normalizeMemoryDate } from "@/lib/dateUtils";
 

@@ -9,7 +9,6 @@ import {
   getLitCityIds,
   getLitProvinceIds,
 } from "@/data/progress";
-import type { LocalMemoryStore } from "@/data/progress";
 import { provinces } from "@/data/provinces";
 import { useLocalMemories } from "@/hooks/useLocalMemories";
 import { mapColors as colors } from "@/lib/mapColors";
@@ -19,7 +18,6 @@ interface ChinaMapProps {
   height?: number;
   className?: string;
   mapPaths?: MapPathData[];
-  dashLinePath?: DashLinePathData;
 }
 
 
@@ -69,7 +67,7 @@ export function SouthChinaSeaInset({ dashLinePath }: { dashLinePath?: DashLinePa
   );
 }
 
-export default function ChinaMap({ width = 1100, height = 860, className, mapPaths = [], dashLinePath }: ChinaMapProps) {
+export default function ChinaMap({ width = 1100, height = 860, className, mapPaths = [] }: ChinaMapProps) {
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const localMemories = useLocalMemories();
   const [zoom, setZoom] = useState(1);

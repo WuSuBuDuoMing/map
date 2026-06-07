@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { Camera, MapPin, RefreshCw } from "lucide-react";
 import { cities } from "@/data/cities";
-import { type Memory } from "@/data/memories";
 import { collectMemories } from "@/data/memoryUtils";
 import {
   memoryStoreUpdatedEvent,

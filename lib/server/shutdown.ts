@@ -82,4 +82,5 @@ export function resetShutdownHooks(): void {
 // Expose drain on globalThis so the Electron main process can call it without
 // importing this module (which would pull in Node-only code into the main
 // process bundle).
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 (globalThis as any).__MAP_OF_US_SHUTDOWN_DRAIN__ = drainShutdownHooks;

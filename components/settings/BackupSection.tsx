@@ -1,4 +1,4 @@
-import { type ChangeEvent, useRef, useState } from "react";
+import { type ChangeEvent } from "react";
 import { Download, Upload } from "lucide-react";
 import type { LocalMemoryStore } from "@/data/progress";
 import { memoryStoreUpdatedEvent } from "@/data/progress";

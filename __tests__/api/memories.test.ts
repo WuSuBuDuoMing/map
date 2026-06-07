@@ -7,7 +7,8 @@
  *  - CRUD lifecycle: create -> list -> edit -> delete
  *  - Edge cases: unknown city, empty store, cover image logic
  */
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect } from "vitest";
+import type { AuthRole } from "../helpers/auth-utils";
 import { GET, POST, PUT, PATCH, DELETE } from "@/app/api/memories/route";
 import {
   makeAuthenticatedRequest,
@@ -15,20 +16,19 @@ import {
   makeRequest,
   buildExpiredCookieHeader,
   buildInvalidCookieHeader,
-  buildCookieHeader,
 } from "../helpers/auth-utils";
 import { makeMemoryPayload, randomCityId } from "../helpers/factories";
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-function memGet(roles: string[] = ["site"]) {
-  const req = makeAuthenticatedRequest("/api/memories", roles as any);
+function memGet(roles: AuthRole[] = ["site"]) {
+  const req = makeAuthenticatedRequest("/api/memories", roles);
   return GET(req);
 }
 
-function memPost(body: unknown, roles: string[] = ["admin"]) {
-  const req = makeAuthenticatedRequest("/api/memories", roles as any, { method: "POST", body });
+function memPost(body: unknown, roles: AuthRole[] = ["admin"]) {
+  const req = makeAuthenticatedRequest("/api/memories", roles, { method: "POST", body });
   return POST(req);
 }
 
@@ -103,9 +103,7 @@ describe("Memories API - Authentication", () => {
   });
 
   it("DELETE returns 403 for site role", async () => {
-    const res = await memDelete({ cityId: "beijing", memoryId: "x" });
     // Even though body is valid, site role should be rejected.
-    // We override the helper:
     const req = makeAuthenticatedRequest("/api/memories", ["site"], {
       method: "DELETE",
       body: { cityId: "beijing", memoryId: "x" },
@@ -292,7 +290,7 @@ describe("Memories API - CRUD Lifecycle", () => {
     expect(res.status).toBe(200);
     expect(json.memories[createdCityId]).toBeDefined();
     const found = json.memories[createdCityId].find(
-      (m: any) => m.id === createdMemoryId,
+      (m: { id: string; text: string }) => m.id === createdMemoryId,
     );
     expect(found).toBeDefined();
     expect(found.text).toBe("My first memory");
@@ -334,7 +332,7 @@ describe("Memories API - CRUD Lifecycle", () => {
     const getRes = await memGet(["admin"]);
     const getData = await getRes.json();
     const memory = getData.memories[createdCityId]?.find(
-      (m: any) => m.id === createdMemoryId,
+      (m: { id: string; photos: string[] }) => m.id === createdMemoryId,
     );
     expect(memory).toBeDefined();
 
@@ -360,7 +358,7 @@ describe("Memories API - CRUD Lifecycle", () => {
     expect(res.status).toBe(200);
     // The memory should no longer exist in the returned store
     const cityMemories = json.memories[createdCityId] ?? [];
-    const found = cityMemories.find((m: any) => m.id === createdMemoryId);
+    const found = cityMemories.find((m: { id: string }) => m.id === createdMemoryId);
     expect(found).toBeUndefined();
   });
 
@@ -370,7 +368,7 @@ describe("Memories API - CRUD Lifecycle", () => {
 
     expect(res.status).toBe(200);
     const cityMemories = json.memories[createdCityId] ?? [];
-    const found = cityMemories.find((m: any) => m.id === createdMemoryId);
+    const found = cityMemories.find((m: { id: string }) => m.id === createdMemoryId);
     expect(found).toBeUndefined();
   });
 });

@@ -9,7 +9,8 @@
  *  - Site role cannot change passwords (403)
  *  - Unauthenticated requests (403 / 503)
  */
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect } from "vitest";
+import type { AuthRole } from "../helpers/auth-utils";
 import { POST } from "@/app/api/auth/password/route";
 import {
   makeAuthenticatedRequest,
@@ -18,8 +19,8 @@ import {
   buildInvalidCookieHeader,
 } from "../helpers/auth-utils";
 
-async function changePassword(body: unknown, roles: string[] = ["admin"]) {
-  const req = makeAuthenticatedRequest("/api/auth/password", roles as any, {
+async function changePassword(body: unknown, roles: AuthRole[] = ["admin"]) {
+  const req = makeAuthenticatedRequest("/api/auth/password", roles, {
     method: "POST",
     body,
   });

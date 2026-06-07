@@ -8,10 +8,7 @@ import {
 } from "lucide-react";
 import { cities } from "@/data/cities";
 import { MemoryPageShell } from "@/components/MemoryNav";
-import {
-  memoryStoreUpdatedEvent,
-  type LocalMemoryStore,
-} from "@/data/progress";
+import type { LocalMemoryStore } from "@/data/progress";
 import {
   readAppSettings,
   writeAppSettings,
@@ -22,7 +19,6 @@ import {
   maxWeatherCities,
   type AppSettings,
 } from "@/data/appSettings";
-import type { LoginPhotoText } from "@/data/loginPhotoSlots";
 import {
   loginPhotosUpdatedEvent,
   readLoginPhotoTexts,
@@ -37,8 +33,6 @@ import { useAdminMode } from "@/hooks/useAdminMode";
 import { PasswordSection } from "./PasswordSection";
 import { LoginPhotoSection } from "./LoginPhotoSection";
 import { BackupSection } from "./BackupSection";
-
-type CityAssetStore = Record<string, string>;
 
 export function SettingsPage() {
   const isAdmin = useAdminMode();
@@ -254,7 +248,7 @@ export function SettingsPage() {
           <div>
             <p className="text-sm font-semibold text-[#5A6670]">基础设置</p>
             <p className="mt-2 text-sm leading-6 text-[#5A6670]/62">
-              标题、纪念日，以及首页"沿途天气"显示的城市，都可以在这里改成你自己的。
+              标题、纪念日，以及首页&apos;沿途天气&apos;显示的城市，都可以在这里改成你自己的。
             </p>
           </div>
 

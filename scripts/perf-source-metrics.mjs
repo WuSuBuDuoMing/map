@@ -54,9 +54,6 @@ function walkTS(dir, prefix = "") {
 
 // Component file metrics
 const componentFiles = walkTS(path.join(ROOT, "components"));
-const dataFiles = walkTS(path.join(ROOT, "data"));
-const libFiles = walkTS(path.join(ROOT, "lib"));
-const appFiles = walkTS(path.join(ROOT, "app"));
 
 // Specific files
 const provinceMapFiles = componentFiles.filter((f) => f.path.includes("ProvinceMap"));
