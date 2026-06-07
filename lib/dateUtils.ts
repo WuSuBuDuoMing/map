@@ -2,6 +2,10 @@
  * Normalize a date string in "YYYY.MM.DD" or "YYYY.M.D" format to a
  * zero-padded "YYYY.MM.DD" string, or null if the value is invalid.
  */
+
+/** Regex pattern matching YYYY.M.D or YYYY.MM.DD date formats */
+export const DATE_PATTERN = /^\d{4}\.\d{1,2}\.\d{1,2}$/;
+
 export const normalizeMemoryDate = (value: string): string | null => {
   const match = value.match(/^(\d{4})\.(\d{1,2})\.(\d{1,2})$/);
   if (!match) return null;

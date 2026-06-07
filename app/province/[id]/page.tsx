@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { ProvinceProgressBadge } from "@/components/HomeProgress";
-import ProvinceMap from "@/components/ProvinceMap";
+import ProvinceMap from "@/components/province-map";
 import { getCitiesByProvince } from "@/data/cities";
 import { getProvinceCityTotal } from "@/data/provinceCityPlaces";
 import { getProvince, provinces } from "@/data/provinces";
