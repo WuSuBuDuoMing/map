@@ -1,5 +1,3 @@
-import { mkdir, readFile, writeFile } from "fs/promises";
-import path from "path";
 import { NextResponse, type NextRequest } from "next/server";
 import { cities } from "@/data/cities";
 import type { Memory } from "@/data/memories";
@@ -13,7 +11,9 @@ import {
 import { isLocalPrivacyRequest, localPrivacyImagePlaceholder } from "@/lib/localPrivacy";
 import { requireAdminSession, requireSiteSession } from "@/lib/server/auth";
 import { getBundledDataFilePath, getPrivateDataFilePath } from "@/lib/server/dataDir";
-import { isRecord, isMemoryImage, imageMaxLength } from "@/lib/server/validation";
+import { isRecord, isMemoryImage, imageMaxLength, assertSameOrigin } from "@/lib/server/validation";
+import { createJsonStore } from "@/lib/server/createJsonStore";
+import { normalizeMemoryDate } from "@/lib/dateUtils";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -27,25 +27,11 @@ const memoryStoreKey = "memories";
 const memoryTextMaxLength = 80;
 const maxPhotosPerMemory = 24;
 
-const normalizeMemoryDate = (value: string) => {
-  const match = value.match(/^(\d{4})\.(\d{1,2})\.(\d{1,2})$/);
-  if (!match) return null;
-
-  const [, rawYear, rawMonth, rawDay] = match;
-  const year = Number(rawYear);
-  const month = Number(rawMonth);
-  const day = Number(rawDay);
-  const date = new Date(Date.UTC(year, month - 1, day));
-
-  const isValid =
-    date.getUTCFullYear() === year &&
-    date.getUTCMonth() === month - 1 &&
-    date.getUTCDate() === day;
-
-  if (!isValid) return null;
-
-  return `${rawYear}.${String(month).padStart(2, "0")}.${String(day).padStart(2, "0")}`;
-};
+const memoryFileStore = createJsonStore<MemoryStore>({
+  filePath: memoryStorePath,
+  fallback: {},
+  name: "memories",
+});
 
 const normalizePhotos = (value: unknown) => {
   if (!Array.isArray(value)) return [];
@@ -102,16 +88,15 @@ async function readMemoryStore(): Promise<MemoryStore> {
     return normalizeMemoryStore(await readJsonValue(memoryStoreKey, {}));
   }
 
-  try {
-    const file = await readFile(memoryStorePath, "utf8");
-    const parsed = JSON.parse(file) as unknown;
+  const raw = await memoryFileStore.read();
 
-    return isRecord(parsed) ? normalizeMemoryStore(parsed as RawMemoryStore) : {};
-  } catch (error) {
-    if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
+  if (Object.keys(raw).length > 0) {
+    return normalizeMemoryStore(raw as RawMemoryStore);
   }
 
+  // Fall back to seed data if the private store is empty.
   try {
+    const { readFile } = await import("fs/promises");
     const file = await readFile(seedMemoryStorePath, "utf8");
     const parsed = JSON.parse(file) as unknown;
 
@@ -128,8 +113,7 @@ async function writeMemoryStore(store: MemoryStore) {
     return;
   }
 
-  await mkdir(path.dirname(memoryStorePath), { recursive: true });
-  await writeFile(memoryStorePath, `${JSON.stringify(store, null, 2)}\n`, "utf8");
+  await memoryFileStore.write(store);
 }
 
 async function uploadMemoryImages(memory: Memory): Promise<Memory> {
@@ -303,6 +287,9 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  const csrfError = assertSameOrigin(request);
+  if (csrfError) return csrfError;
+
   const authResponse = requireAdminSession(request);
   if (authResponse) return authResponse;
 
@@ -331,6 +318,9 @@ export async function POST(request: NextRequest) {
 }
 
 export async function PUT(request: NextRequest) {
+  const csrfError = assertSameOrigin(request);
+  if (csrfError) return csrfError;
+
   const authResponse = requireAdminSession(request);
   if (authResponse) return authResponse;
 
@@ -362,6 +352,9 @@ export async function PUT(request: NextRequest) {
 }
 
 export async function PATCH(request: NextRequest) {
+  const csrfError = assertSameOrigin(request);
+  if (csrfError) return csrfError;
+
   const authResponse = requireAdminSession(request);
   if (authResponse) return authResponse;
 
@@ -432,6 +425,9 @@ export async function PATCH(request: NextRequest) {
 }
 
 export async function DELETE(request: NextRequest) {
+  const csrfError = assertSameOrigin(request);
+  if (csrfError) return csrfError;
+
   const authResponse = requireAdminSession(request);
   if (authResponse) return authResponse;
 

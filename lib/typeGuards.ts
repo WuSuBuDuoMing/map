@@ -1,9 +1,9 @@
 /**
- * Client-safe type guard. The server-only version lives in
- * `lib/server/validation.ts` (it imports Next.js request/response types).
- * This file provides the pure runtime check so client-side modules
- * (appSettings, loginPhotoStore, etc.) can use `isRecord` without pulling
- * in server-only dependencies.
+ * Shared type guard for plain-object detection. This file is the single source
+ * of truth for `isRecord`. Server-only modules re-export it from
+ * `lib/server/validation.ts` (which adds Next.js request/response helpers);
+ * client-side modules (appSettings, loginPhotoStore, etc.) import directly here
+ * to avoid pulling in server-only dependencies.
  */
 
 /** Type guard: is this a plain object (not array, not null)? */

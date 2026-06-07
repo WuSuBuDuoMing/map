@@ -1,4 +1,4 @@
-import { createClient } from "@supabase/supabase-js";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -15,16 +15,28 @@ export function assertWritableStorageConfigured() {
   }
 }
 
-export function getSupabaseAdmin() {
-  if (shouldUseLocalFileStorage) return null;
-  if (!supabaseUrl || !supabaseServiceRoleKey) return null;
+let cachedClient: SupabaseClient | null | undefined;
 
-  return createClient(supabaseUrl, supabaseServiceRoleKey, {
+export function getSupabaseAdmin(): SupabaseClient | null {
+  if (cachedClient !== undefined) return cachedClient;
+
+  if (shouldUseLocalFileStorage) {
+    cachedClient = null;
+    return cachedClient;
+  }
+  if (!supabaseUrl || !supabaseServiceRoleKey) {
+    cachedClient = null;
+    return cachedClient;
+  }
+
+  cachedClient = createClient(supabaseUrl, supabaseServiceRoleKey, {
     auth: {
       autoRefreshToken: false,
       persistSession: false,
     },
   });
+
+  return cachedClient;
 }
 
 export async function readJsonValue<T>(key: string, fallback: T): Promise<T> {

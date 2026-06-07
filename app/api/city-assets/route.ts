@@ -1,5 +1,3 @@
-import { mkdir, readFile, writeFile } from "fs/promises";
-import path from "path";
 import { NextResponse, type NextRequest } from "next/server";
 import { cities } from "@/data/cities";
 import {
@@ -12,6 +10,7 @@ import {
 import { isLocalPrivacyRequest, localPrivacyImagePlaceholder } from "@/lib/localPrivacy";
 import { getMissingAuthEnv, hasSiteSession, requireAdminSession } from "@/lib/server/auth";
 import { getPrivateDataFilePath } from "@/lib/server/dataDir";
+import { createJsonStore } from "@/lib/server/createJsonStore";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -21,7 +20,13 @@ type CityAssetStore = Record<string, string>;
 const cityAssetStorePath = getPrivateDataFilePath("cityAssets.private.json");
 const cityAssetStoreKey = "city-assets";
 
-import { isRecord, isCityAssetImage } from "@/lib/server/validation";
+const cityAssetFileStore = createJsonStore<CityAssetStore>({
+  filePath: cityAssetStorePath,
+  fallback: {},
+  name: "city-assets",
+});
+
+import { isRecord, isCityAssetImage, assertSameOrigin } from "@/lib/server/validation";
 
 function normalizeCityAssetStore(value: unknown): CityAssetStore {
   if (!isRecord(value)) return {};
@@ -38,13 +43,7 @@ async function readCityAssetStore(): Promise<CityAssetStore> {
     return normalizeCityAssetStore(await readJsonValue(cityAssetStoreKey, {}));
   }
 
-  try {
-    const file = await readFile(cityAssetStorePath, "utf8");
-    return normalizeCityAssetStore(JSON.parse(file) as unknown);
-  } catch (error) {
-    if ((error as NodeJS.ErrnoException).code === "ENOENT") return {};
-    throw error;
-  }
+  return normalizeCityAssetStore(await cityAssetFileStore.read());
 }
 
 async function writeCityAssetStore(store: CityAssetStore) {
@@ -53,8 +52,7 @@ async function writeCityAssetStore(store: CityAssetStore) {
     return;
   }
 
-  await mkdir(path.dirname(cityAssetStorePath), { recursive: true });
-  await writeFile(cityAssetStorePath, `${JSON.stringify(store, null, 2)}\n`, "utf8");
+  await cityAssetFileStore.write(store);
 }
 
 function parseCityAssetPayload(payload: unknown) {
@@ -96,6 +94,9 @@ export async function GET(request: NextRequest) {
 }
 
 export async function PUT(request: NextRequest) {
+  const csrfError = assertSameOrigin(request);
+  if (csrfError) return csrfError;
+
   const authResponse = requireAdminSession(request);
   if (authResponse) return authResponse;
 
@@ -121,6 +122,9 @@ export async function PUT(request: NextRequest) {
 }
 
 export async function PATCH(request: NextRequest) {
+  const csrfError = assertSameOrigin(request);
+  if (csrfError) return csrfError;
+
   const authResponse = requireAdminSession(request);
   if (authResponse) return authResponse;
 
@@ -152,6 +156,9 @@ export async function PATCH(request: NextRequest) {
 }
 
 export async function DELETE(request: NextRequest) {
+  const csrfError = assertSameOrigin(request);
+  if (csrfError) return csrfError;
+
   const authResponse = requireAdminSession(request);
   if (authResponse) return authResponse;
 

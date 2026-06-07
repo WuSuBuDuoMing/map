@@ -1,5 +1,3 @@
-import { mkdir, readFile, writeFile } from "fs/promises";
-import path from "path";
 import { NextResponse, type NextRequest } from "next/server";
 import {
   assertWritableStorageConfigured,
@@ -11,6 +9,7 @@ import {
 import { isLocalPrivacyRequest } from "@/lib/localPrivacy";
 import { getMissingAuthEnv, requireAdminSession } from "@/lib/server/auth";
 import { getPrivateDataFilePath } from "@/lib/server/dataDir";
+import { createJsonStore } from "@/lib/server/createJsonStore";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -26,7 +25,13 @@ const loginPhotoStorePath = getPrivateDataFilePath("loginPhotos.private.json");
 const loginPhotoStoreKey = "login-photos";
 const slotIdPattern = /^[a-z0-9_-]{1,40}$/i;
 
-import { isRecord, isLoginPhotoImage } from "@/lib/server/validation";
+const loginPhotoFileStore = createJsonStore<LoginPhotoStore>({
+  filePath: loginPhotoStorePath,
+  fallback: { photos: {}, texts: {} },
+  name: "login-photos",
+});
+
+import { isRecord, isLoginPhotoImage, assertSameOrigin } from "@/lib/server/validation";
 
 function normalizePhotoMap(value: unknown): Record<string, string> {
   if (!isRecord(value)) return {};
@@ -73,13 +78,7 @@ async function readLoginPhotoStore(): Promise<LoginPhotoStore> {
     return normalizeLoginPhotoStore(await readJsonValue(loginPhotoStoreKey, {}));
   }
 
-  try {
-    const file = await readFile(loginPhotoStorePath, "utf8");
-    return normalizeLoginPhotoStore(JSON.parse(file) as unknown);
-  } catch (error) {
-    if ((error as NodeJS.ErrnoException).code === "ENOENT") return { photos: {}, texts: {} };
-    throw error;
-  }
+  return normalizeLoginPhotoStore(await loginPhotoFileStore.read());
 }
 
 async function writeLoginPhotoStore(store: LoginPhotoStore) {
@@ -88,8 +87,7 @@ async function writeLoginPhotoStore(store: LoginPhotoStore) {
     return;
   }
 
-  await mkdir(path.dirname(loginPhotoStorePath), { recursive: true });
-  await writeFile(loginPhotoStorePath, `${JSON.stringify(store, null, 2)}\n`, "utf8");
+  await loginPhotoFileStore.write(store);
 }
 
 function parseLoginPhotoPayload(
@@ -148,6 +146,9 @@ export async function GET(request: NextRequest) {
 }
 
 export async function PUT(request: NextRequest) {
+  const csrfError = assertSameOrigin(request);
+  if (csrfError) return csrfError;
+
   const authResponse = requireAdminSession(request);
   if (authResponse) return authResponse;
 
@@ -185,6 +186,9 @@ export async function PUT(request: NextRequest) {
 }
 
 export async function PATCH(request: NextRequest) {
+  const csrfError = assertSameOrigin(request);
+  if (csrfError) return csrfError;
+
   const authResponse = requireAdminSession(request);
   if (authResponse) return authResponse;
 
@@ -224,6 +228,9 @@ export async function PATCH(request: NextRequest) {
 }
 
 export async function DELETE(request: NextRequest) {
+  const csrfError = assertSameOrigin(request);
+  if (csrfError) return csrfError;
+
   const authResponse = requireAdminSession(request);
   if (authResponse) return authResponse;
 

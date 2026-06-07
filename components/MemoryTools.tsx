@@ -314,6 +314,7 @@ function MemoryToolPage({ config }: Readonly<{ config: ToolConfig }>) {
               value={cityId}
               onChange={(event) => setCityId(event.target.value)}
               disabled={!isAdmin}
+              aria-label="选择城市"
             >
               {cityOptions.map((city) => (
                 <option key={city.id} value={city.id}>
@@ -949,6 +950,7 @@ export function SettingsPage() {
                   value={weatherCityIds[index] ?? ""}
                   onChange={(event) => updateWeatherCity(index, event.target.value)}
                   disabled={!isAdmin}
+                  aria-label={`沿途天气城市 ${index + 1}`}
                 >
                   {cities.map((city) => (
                     <option key={city.id} value={city.id}>

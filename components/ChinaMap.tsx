@@ -27,7 +27,6 @@ const provinceById = new Map(provinces.map((province) => [province.id, province]
 const easyTapProvinceIds = new Set(["hongkong", "macau"]);
 const maxZoom = 1.45;
 const minZoom = 1;
-const stableCoordinate = (value: number) => Number(value.toFixed(3));
 
 // The South China Sea ten-dash line, drawn as a small standalone inset box so it
 // is always visible and never overlapped by floating cards on the main map.
@@ -215,12 +214,21 @@ export default function ChinaMap({ width = 1100, height = 860, className, mapPat
                   strokeWidth={path.lit ? 2.2 : 1.25}
                   strokeLinejoin="round"
                   className="cursor-pointer transition-all duration-300"
+                  tabIndex={0}
+                  role="button"
+                  aria-label={`${path.province?.name ?? path.id} 省`}
                   filter={path.lit || isHovered ? "url(#visitedGlow)" : undefined}
                   onMouseEnter={() => setHoveredId(path.id)}
                   onMouseLeave={() =>
                     setHoveredId((current) => (current === path.id ? null : current))
                   }
                   onClick={() => goProvince(path.id)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" || event.key === " ") {
+                      event.preventDefault();
+                      goProvince(path.id);
+                    }
+                  }}
                 />
               );
             })}

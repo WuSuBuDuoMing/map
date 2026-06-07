@@ -1,6 +1,7 @@
 import { geoArea, geoMercator, geoPath } from "d3-geo";
 import rawChina from "@/data/china-geo.json";
 import { provinces } from "@/data/provinces";
+import { stableCoordinate } from "@/lib/geo";
 
 type Position = [number, number];
 type Ring = Position[];
@@ -45,8 +46,6 @@ function fixWinding(feature: GeoFeature): GeoFeature {
 
   return feature;
 }
-
-const stableCoordinate = (value: number) => Number(value.toFixed(3));
 
 // Process all features at build time (server side only)
 const chinaFeatures: GeoFeature[] = (rawChina.features as GeoFeature[])

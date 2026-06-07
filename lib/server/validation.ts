@@ -1,8 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 
-/** Type guard: is this a plain object (not array, not null)? */
-export const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === "object" && value !== null && !Array.isArray(value);
+/** Re-export the client-safe type guard so server modules can import it here */
+export { isRecord } from "@/lib/typeGuards";
 
 /** Maximum allowed inline image size (base64 data URL length) */
 export const imageMaxLength = 12_000_000;
@@ -42,19 +41,20 @@ export const isLoginPhotoImage = createImageValidator([
   "data:image/",
 ]);
 
-/** Validate a string field from a parsed JSON payload */
-export function parseStringField(
-  payload: Record<string, unknown>,
-  key: string,
-  options?: { required?: boolean; maxLength?: number; pattern?: RegExp },
-): string | null {
-  const value = payload[key];
-  if (typeof value !== "string") return null;
-  const trimmed = value.trim();
-  if (options?.maxLength && trimmed.length > options.maxLength) return null;
-  if (options?.pattern && !options.pattern.test(trimmed)) return null;
-  if (options?.required && trimmed.length === 0) return null;
-  return trimmed;
+/** Verify request is same-origin (CSRF defense) */
+export function assertSameOrigin(request: NextRequest): NextResponse | null {
+  const origin = request.headers.get("origin");
+  const host = request.headers.get("host");
+
+  // Allow requests without origin (same-origin browser requests)
+  // or requests with matching origin
+  if (origin && host && !origin.endsWith(host)) {
+    return NextResponse.json(
+      { error: "Cross-origin request rejected" },
+      { status: 403 },
+    );
+  }
+  return null;
 }
 
 /** Check Content-Length header and reject oversized requests early */

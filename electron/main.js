@@ -20,6 +20,7 @@ const authConfigPath = path.join(userDataDir, "auth.local.json");
 let serverProcess = null;
 let mainWindow = null;
 let appUrl = "";
+let isShuttingDown = false;
 
 function readOrCreateAuthConfig() {
   try {
@@ -201,15 +202,66 @@ app.whenReady().then(async () => {
 });
 
 function shutdown() {
-  if (serverProcess) {
-    serverProcess.kill();
-    serverProcess = null;
+  if (isShuttingDown) return;
+  isShuttingDown = true;
+
+  const HARD_TIMEOUT_MS = 15_000;
+
+  const forceExitTimer = setTimeout(() => {
+    console.error("[electron] hard timeout reached, forcing exit");
+    app.exit(0);
+  }, HARD_TIMEOUT_MS);
+  forceExitTimer.unref();
+
+  async function drain() {
+    try {
+      // Production mode: Next.js runs in-process, drain via globalThis.
+      const drainFn = globalThis.__MAP_OF_US_SHUTDOWN_DRAIN__;
+      if (typeof drainFn === "function") {
+        const timedOut = await drainFn({ timeoutMs: HARD_TIMEOUT_MS });
+        if (timedOut.length > 0) {
+          console.warn("[electron] shutdown hooks that timed out:", timedOut);
+        }
+      }
+    } catch (err) {
+      console.error("[electron] error draining shutdown hooks:", err);
+    }
   }
+
+  async function stopServer() {
+    // Dev mode: kill the child process.
+    if (serverProcess) {
+      try {
+        serverProcess.kill();
+      } catch {
+        // Already exited.
+      }
+      serverProcess = null;
+    }
+  }
+
+  drain()
+    .then(stopServer)
+    .then(() => {
+      clearTimeout(forceExitTimer);
+      app.exit(0);
+    })
+    .catch((err) => {
+      console.error("[electron] unexpected error during shutdown:", err);
+      clearTimeout(forceExitTimer);
+      app.exit(0);
+    });
 }
 
 app.on("window-all-closed", () => {
   shutdown();
-  app.quit();
+  // app.quit() will trigger before-quit, but isShuttingDown guards against
+  // re-entrant calls.  Call app.exit(0) directly to avoid extra quit cycle.
+  if (!isShuttingDown) app.quit();
 });
 
-app.on("before-quit", shutdown);
+app.on("before-quit", (event) => {
+  if (isShuttingDown) return; // shutdown() is already running
+  event.preventDefault();
+  shutdown();
+});

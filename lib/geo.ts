@@ -46,6 +46,9 @@ function fixWinding(feature: GeoFeature): GeoFeature {
   return feature;
 }
 
+/** Round a coordinate to 3 decimal places for stable SVG rendering. */
+export const stableCoordinate = (value: number) => Number(value.toFixed(3));
+
 export const chinaFeatures: GeoFeature[] = (rawChina.features as GeoFeature[])
   .filter(
     (feature) =>

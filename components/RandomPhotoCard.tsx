@@ -4,7 +4,8 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { Camera, MapPin, RefreshCw } from "lucide-react";
 import { cities } from "@/data/cities";
-import { memories, type Memory } from "@/data/memories";
+import { type Memory } from "@/data/memories";
+import { collectMemories } from "@/data/memoryUtils";
 import {
   memoryStoreUpdatedEvent,
   type LocalMemoryStore,
@@ -19,17 +20,6 @@ interface RandomPhoto {
   cityId: string;
   date: string;
   text: string;
-}
-
-function collectMemories(localMemories: LocalMemoryStore) {
-  const localItems = Object.values(localMemories).flat();
-  const byId = new Map<string, Memory>();
-
-  [...memories, ...localItems].forEach((memory) => {
-    if (!memory.draft) byId.set(memory.id, memory);
-  });
-
-  return [...byId.values()];
 }
 
 function PhotoImage({ photo }: Readonly<{ photo: RandomPhoto }>) {

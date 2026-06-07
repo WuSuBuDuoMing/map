@@ -344,3 +344,8 @@ button {
     0 3px 10px rgb(90 102 112 / 0.14),
     0 0 0 3px rgb(245 220 224 / 0.72);
 }
+
+:focus-visible {
+  outline: 2px solid #A8C8DC;
+  outline-offset: 2px;
+}

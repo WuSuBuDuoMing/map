@@ -8,7 +8,8 @@ import {
   memoryStoreUpdatedEvent,
   type LocalMemoryStore,
 } from "@/data/progress";
-import { memories, type Memory } from "@/data/memories";
+import { type Memory } from "@/data/memories";
+import { collectMemories } from "@/data/memoryUtils";
 import { LocalPrivacyImage, LocalPrivacyImg } from "@/components/LocalPrivacyImage";
 import { isBrowserImageUrl } from "@/lib/imageUtils";
 
@@ -23,17 +24,6 @@ function pickRandomMemories(items: Memory[]) {
   }
 
   return shuffled.slice(0, randomMemoryCount);
-}
-
-function collectMemories(localMemories: LocalMemoryStore) {
-  const localItems = Object.values(localMemories).flat();
-  const byId = new Map<string, Memory>();
-
-  [...memories, ...localItems].forEach((memory) => {
-    if (!memory.draft) byId.set(memory.id, memory);
-  });
-
-  return [...byId.values()];
 }
 
 function MemoryThumb({ memory }: Readonly<{ memory: Memory }>) {

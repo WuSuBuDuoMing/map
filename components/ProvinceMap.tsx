@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   ImagePlus,
@@ -14,7 +14,8 @@ import {
   Trash2,
   X,
 } from "lucide-react";
-import { chinaFeatures, makePath, makeProjectionForProvince, provinceIdOf } from "@/lib/geo";
+import { chinaFeatures, makePath, makeProjectionForProvince, provinceIdOf, stableCoordinate } from "@/lib/geo";
+import { normalizeMemoryDate } from "@/lib/dateUtils";
 import { cityFallbackSprite, getCitiesByProvince, type City } from "@/data/cities";
 import { getLatestMemory, sortMemoriesByTime, type Memory } from "@/data/memories";
 import { getLitCityIds, memoryStoreUpdatedEvent, type LocalMemoryStore } from "@/data/progress";
@@ -66,6 +67,7 @@ const memoryCardWidth = 292;
 const memoryCardGap = 26;
 const memoryCardMaxHeight = 620;
 const cityListPanelWidth = 250;
+const emptyMemories: Memory[] = [];
 
 const isObjectUrl = (url?: string | null): url is string =>
   typeof url === "string" && url.startsWith("blob:");
@@ -77,26 +79,6 @@ const revokeObjectUrl = (url?: string | null) => {
 const isDataImageUrl = (url?: string | null): url is string =>
   typeof url === "string" && url.startsWith("data:image/");
 
-
-const normalizeMemoryDate = (value: string) => {
-  const match = value.match(/^(\d{4})\.(\d{1,2})\.(\d{1,2})$/);
-  if (!match) return null;
-
-  const [, rawYear, rawMonth, rawDay] = match;
-  const year = Number(rawYear);
-  const month = Number(rawMonth);
-  const day = Number(rawDay);
-  const date = new Date(Date.UTC(year, month - 1, day));
-
-  const isValid =
-    date.getUTCFullYear() === year &&
-    date.getUTCMonth() === month - 1 &&
-    date.getUTCDate() === day;
-
-  if (!isValid) return null;
-
-  return `${rawYear}.${String(month).padStart(2, "0")}.${String(day).padStart(2, "0")}`;
-};
 
 const markerLayoutByCity: Record<
   string,
@@ -230,8 +212,6 @@ const getMarkerLayout = (city: City, selected: boolean) => {
   return markerLayoutByCity[city.id] ?? defaultMarkerLayout;
 };
 
-const stableCoordinate = (value: number) => Number(value.toFixed(3));
-
 const clampZoom = (value: number) => Math.min(Math.max(value, 1), 2.4);
 
 const readBlobAsDataUrl = (blob: Blob) =>
@@ -336,6 +316,10 @@ export default function ProvinceMap({ province, width = 1120, height = 760 }: Pr
   const provinceCities = useMemo(() => getCitiesByProvince(province.id), [province.id]);
   const litCityIds = useMemo(() => getLitCityIds(localMemories), [localMemories]);
   const selectedCity = provinceCities.find((city) => city.id === selectedCityId) ?? null;
+  const selectedCityMemories = useMemo(
+    () => (selectedCityId ? (localMemories[selectedCityId] ?? emptyMemories) : emptyMemories),
+    [selectedCityId, localMemories],
+  );
   const cityList = useMemo(
     () =>
       [...provinceCities].sort((a, b) => {
@@ -467,28 +451,28 @@ export default function ProvinceMap({ province, width = 1120, height = 760 }: Pr
   }, [cityAssets, height, litCityIds, localMemories, province.id, provinceCities, width]);
 
   const selectedPoint = mapData.cities.find((city) => city.id === selectedCityId);
-  const cardAnchor = selectedPoint
-    ? (() => {
-        const renderedWidth = width * frameScale;
-        const renderedHeight = height * frameScale;
-        const rightLimit = Math.max(memoryCardWidth + 24, renderedWidth - cityListPanelWidth);
-        const anchorX = (selectedPoint.x * camera.scale + camera.x) * frameScale;
-        const anchorY = (selectedPoint.y * camera.scale + camera.y) * frameScale;
-        const side = anchorX + memoryCardGap + memoryCardWidth > rightLimit ? "left" : "right";
-        const x =
-          side === "right"
-            ? Math.min(anchorX + memoryCardGap, rightLimit - memoryCardWidth - 12)
-            : Math.max(anchorX - memoryCardGap - memoryCardWidth, 12);
-        const y = Math.min(
-          Math.max(anchorY - 170, 82),
-          Math.max(82, renderedHeight - memoryCardMaxHeight),
-        );
+  const cardAnchor = useMemo<CardAnchor | null>(() => {
+    if (!selectedPoint) return null;
 
-        return { x, y, side } satisfies CardAnchor;
-      })()
-    : null;
+    const renderedWidth = width * frameScale;
+    const renderedHeight = height * frameScale;
+    const rightLimit = Math.max(memoryCardWidth + 24, renderedWidth - cityListPanelWidth);
+    const anchorX = (selectedPoint.x * camera.scale + camera.x) * frameScale;
+    const anchorY = (selectedPoint.y * camera.scale + camera.y) * frameScale;
+    const side = anchorX + memoryCardGap + memoryCardWidth > rightLimit ? "left" : "right";
+    const x =
+      side === "right"
+        ? Math.min(anchorX + memoryCardGap, rightLimit - memoryCardWidth - 12)
+        : Math.max(anchorX - memoryCardGap - memoryCardWidth, 12);
+    const y = Math.min(
+      Math.max(anchorY - 170, 82),
+      Math.max(82, renderedHeight - memoryCardMaxHeight),
+    );
 
-  const handleSaveMemory = async (cityId: string, memory: Memory) => {
+    return { x, y, side };
+  }, [selectedPoint, camera, frameScale, width, height]);
+
+  const handleSaveMemory = useCallback(async (cityId: string, memory: Memory) => {
     if (!isAdmin) throw new Error("Admin mode required");
 
     const response = await fetch("/api/memories", {
@@ -507,9 +491,9 @@ export default function ProvinceMap({ province, width = 1120, height = 760 }: Pr
       return data.memories;
     });
     window.dispatchEvent(new CustomEvent(memoryStoreUpdatedEvent, { detail: data.memories }));
-  };
+  }, [isAdmin]);
 
-  const handleSetMemoryCover = async (cityId: string, memoryId: string, coverImage: string) => {
+  const handleSetMemoryCover = useCallback(async (cityId: string, memoryId: string, coverImage: string) => {
     if (!isAdmin) throw new Error("Admin mode required");
 
     const response = await fetch("/api/memories", {
@@ -528,9 +512,9 @@ export default function ProvinceMap({ province, width = 1120, height = 760 }: Pr
       return data.memories;
     });
     window.dispatchEvent(new CustomEvent(memoryStoreUpdatedEvent, { detail: data.memories }));
-  };
+  }, [isAdmin]);
 
-  const handleUpdateMemory = async (cityId: string, memoryId: string, memory: Memory) => {
+  const handleUpdateMemory = useCallback(async (cityId: string, memoryId: string, memory: Memory) => {
     if (!isAdmin) throw new Error("Admin mode required");
 
     const response = await fetch("/api/memories", {
@@ -549,9 +533,9 @@ export default function ProvinceMap({ province, width = 1120, height = 760 }: Pr
       return data.memories;
     });
     window.dispatchEvent(new CustomEvent(memoryStoreUpdatedEvent, { detail: data.memories }));
-  };
+  }, [isAdmin]);
 
-  const handleDeleteMemory = async (cityId: string, memoryId: string) => {
+  const handleDeleteMemory = useCallback(async (cityId: string, memoryId: string) => {
     if (!isAdmin) throw new Error("Admin mode required");
 
     const response = await fetch("/api/memories", {
@@ -570,9 +554,9 @@ export default function ProvinceMap({ province, width = 1120, height = 760 }: Pr
       return data.memories;
     });
     window.dispatchEvent(new CustomEvent(memoryStoreUpdatedEvent, { detail: data.memories }));
-  };
+  }, [isAdmin]);
 
-  const handleSaveCityAsset = async (cityId: string, image: string) => {
+  const handleSaveCityAsset = useCallback(async (cityId: string, image: string) => {
     if (!isAdmin) throw new Error("Admin mode required");
 
     const response = await fetch("/api/city-assets", {
@@ -585,9 +569,9 @@ export default function ProvinceMap({ province, width = 1120, height = 760 }: Pr
 
     const data = (await response.json()) as { assets: CityAssetStore };
     setCityAssets(data.assets);
-  };
+  }, [isAdmin]);
 
-  const handleDeleteCityAsset = async (cityId: string) => {
+  const handleDeleteCityAsset = useCallback(async (cityId: string) => {
     if (!isAdmin) throw new Error("Admin mode required");
 
     const response = await fetch("/api/city-assets", {
@@ -600,7 +584,9 @@ export default function ProvinceMap({ province, width = 1120, height = 760 }: Pr
 
     const data = (await response.json()) as { assets: CityAssetStore };
     setCityAssets(data.assets);
-  };
+  }, [isAdmin]);
+
+  const handleCloseCard = useCallback(() => setSelectedCityId(null), []);
 
   const focusCity = (city: Pick<City, "id" | "lng" | "lat">) => {
     const point = mapData.cities.find((candidate) => candidate.id === city.id);
@@ -910,11 +896,11 @@ export default function ProvinceMap({ province, width = 1120, height = 760 }: Pr
         <MemoryCard
           key={selectedCity.id}
           city={selectedCity}
-          localMemories={localMemories[selectedCity.id] ?? []}
+          localMemories={selectedCityMemories}
           isLit={litCityIds.has(selectedCity.id)}
           anchor={cardAnchor}
           isAdmin={isAdmin}
-          onClose={() => setSelectedCityId(null)}
+          onClose={handleCloseCard}
           onSave={handleSaveMemory}
         onSetCover={handleSetMemoryCover}
         onUpdate={handleUpdateMemory}
@@ -1013,7 +999,7 @@ function CityMarker({ city, lit, selected }: Readonly<{ city: City; lit: boolean
   );
 }
 
-function MemoryCard({
+const MemoryCard = memo(function MemoryCard({
   city,
   localMemories,
   isLit,
@@ -1774,7 +1760,7 @@ function MemoryCard({
       </AnimatePresence>
     </motion.article>
   );
-}
+});
 
 function MemoryImage({
   src,

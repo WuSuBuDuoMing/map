@@ -10,7 +10,7 @@ import {
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
-import { isRecord } from "@/lib/server/validation";
+import { isRecord, assertSameOrigin } from "@/lib/server/validation";
 
 const parseLoginPayload = (payload: unknown): { role: AuthRole; password: string } | null => {
   if (!isRecord(payload) || typeof payload.password !== "string") return null;
@@ -29,6 +29,9 @@ const parseLogoutPayload = (payload: unknown): AuthRole | "all" => {
 };
 
 export async function POST(request: NextRequest) {
+  const csrfError = assertSameOrigin(request);
+  if (csrfError) return csrfError;
+
   const payload = parseLoginPayload(await request.json().catch(() => null));
 
   if (!payload) {
@@ -51,6 +54,9 @@ export async function POST(request: NextRequest) {
 }
 
 export async function DELETE(request: NextRequest) {
+  const csrfError = assertSameOrigin(request);
+  if (csrfError) return csrfError;
+
   const role = parseLogoutPayload(await request.json().catch(() => null));
   const response = NextResponse.json({ ok: true });
 

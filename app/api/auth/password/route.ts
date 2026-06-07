@@ -1,14 +1,36 @@
-import { mkdir, readFile, writeFile } from "fs/promises";
-import path from "path";
 import { NextResponse, type NextRequest } from "next/server";
 import { requireAdminSession } from "@/lib/server/auth";
+import { createJsonStore } from "@/lib/server/createJsonStore";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
-import { isRecord } from "@/lib/server/validation";
+import { isRecord, assertSameOrigin, assertContentLength } from "@/lib/server/validation";
+
+type AuthConfig = Record<string, unknown>;
+
+let cachedConfigPath: string | null = null;
+let authConfigStore: ReturnType<typeof createJsonStore<AuthConfig>> | null = null;
+
+function getAuthConfigStore(configPath: string): ReturnType<typeof createJsonStore<AuthConfig>> {
+  if (cachedConfigPath !== configPath) {
+    cachedConfigPath = configPath;
+    authConfigStore = createJsonStore<AuthConfig>({
+      filePath: configPath,
+      fallback: {},
+      name: "auth-config",
+    });
+  }
+  return authConfigStore!;
+}
 
 export async function POST(request: NextRequest) {
+  const csrfError = assertSameOrigin(request);
+  if (csrfError) return csrfError;
+
+  const tooLarge = assertContentLength(request, 1024);
+  if (tooLarge) return tooLarge;
+
   const authError = requireAdminSession(request);
   if (authError) return authError;
 
@@ -28,23 +50,25 @@ export async function POST(request: NextRequest) {
   }
 
   // Update the running server immediately (verifyPassword reads process.env).
+  // NOTE: In a desktop-only scenario, process.env is process-scoped and will
+  // be lost on restart. Persistence is handled below via the auth config file.
+  // In a server-deployed scenario, process.env changes are ephemeral and would
+  // need a secrets manager or database-backed config to survive restarts.
   if (target === "site") {
     process.env.SITE_PASSWORD = newPassword;
   } else {
     process.env.ADMIN_PASSWORD = newPassword;
   }
 
+  // Audit log (no plaintext passwords logged)
+  console.log(`[auth] Password changed for target="${target}" by admin session`);
+
   // Persist to the desktop auth config so the new password survives restarts.
   const configPath = process.env.MAP_OF_US_AUTH_CONFIG;
   if (configPath) {
     try {
-      let config: Record<string, unknown> = {};
-      try {
-        const parsed = JSON.parse(await readFile(configPath, "utf8")) as unknown;
-        if (isRecord(parsed)) config = parsed;
-      } catch {
-        config = {};
-      }
+      const store = getAuthConfigStore(configPath);
+      const config = await store.read();
 
       config.sitePassword = process.env.SITE_PASSWORD;
       config.adminPassword = process.env.ADMIN_PASSWORD;
@@ -52,8 +76,7 @@ export async function POST(request: NextRequest) {
         config.cookieSecret = process.env.AUTH_COOKIE_SECRET;
       }
 
-      await mkdir(path.dirname(configPath), { recursive: true });
-      await writeFile(configPath, `${JSON.stringify(config, null, 2)}\n`, "utf8");
+      await store.write(config);
     } catch {
       return NextResponse.json(
         { error: "Password updated for this session, but saving to disk failed." },

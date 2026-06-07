@@ -4,7 +4,7 @@ import Image from "next/image";
 import { useMemo, useState, type CSSProperties } from "react";
 import { motion } from "framer-motion";
 import { Camera, LockKeyhole, MapPinned, Minus, MousePointer2, Plus, RotateCcw } from "lucide-react";
-import { chinaFeatures, makePath, makeProjection, provinceIdOf } from "@/lib/geo";
+import { chinaFeatures, makePath, makeProjection, provinceIdOf, stableCoordinate } from "@/lib/geo";
 import { cities } from "@/data/cities";
 import { getLitCityIds, getLitProvinceIds, type LocalMemoryStore } from "@/data/progress";
 import { provinces } from "@/data/provinces";
@@ -74,8 +74,6 @@ const featuredCityIds = ["zhengzhou", "hangzhou", "shanghai", "hongkong"] as con
 const provinceById = new Map(provinces.map((province) => [province.id, province]));
 const maxZoom = 1.45;
 const minZoom = 1;
-
-const stableCoordinate = (value: number) => Number(value.toFixed(3));
 
 function DemoPhotoPlaceholder({ city }: Readonly<{ city?: string }>) {
   return (
