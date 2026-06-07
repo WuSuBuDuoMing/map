@@ -26,7 +26,7 @@ const cityAssetFileStore = createJsonStore<CityAssetStore>({
   name: "city-assets",
 });
 
-import { isRecord, isCityAssetImage, assertSameOrigin } from "@/lib/server/validation";
+import { isRecord, isCityAssetImage, assertSameOrigin, assertContentLength } from "@/lib/server/validation";
 
 function normalizeCityAssetStore(value: unknown): CityAssetStore {
   if (!isRecord(value)) return {};
@@ -90,12 +90,20 @@ export async function GET(request: NextRequest) {
 
   const assets = await readCityAssetStore();
 
-  return NextResponse.json({ assets: isLocalPrivacyRequest(request) ? maskCityAssets(assets) : assets });
+  const response = NextResponse.json({ assets: isLocalPrivacyRequest(request) ? maskCityAssets(assets) : assets });
+
+  // Cache for 10 minutes, city assets change infrequently
+  response.headers.set("Cache-Control", "private, max-age=600, stale-while-revalidate=120");
+
+  return response;
 }
 
 export async function PUT(request: NextRequest) {
   const csrfError = assertSameOrigin(request);
   if (csrfError) return csrfError;
+
+  const sizeError = assertContentLength(request, 15 * 1024 * 1024); // 15MB
+  if (sizeError) return sizeError;
 
   const authResponse = requireAdminSession(request);
   if (authResponse) return authResponse;

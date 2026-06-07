@@ -60,9 +60,6 @@ export async function POST(request: NextRequest) {
     process.env.ADMIN_PASSWORD = newPassword;
   }
 
-  // Audit log (no plaintext passwords logged)
-  console.log(`[auth] Password changed for target="${target}" by admin session`);
-
   // Persist to the desktop auth config so the new password survives restarts.
   const configPath = process.env.MAP_OF_US_AUTH_CONFIG;
   if (configPath) {

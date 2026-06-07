@@ -31,7 +31,7 @@ const loginPhotoFileStore = createJsonStore<LoginPhotoStore>({
   name: "login-photos",
 });
 
-import { isRecord, isLoginPhotoImage, assertSameOrigin } from "@/lib/server/validation";
+import { isRecord, isLoginPhotoImage, assertSameOrigin, assertContentLength } from "@/lib/server/validation";
 
 function normalizePhotoMap(value: unknown): Record<string, string> {
   if (!isRecord(value)) return {};
@@ -142,12 +142,20 @@ export async function GET(request: NextRequest) {
 
   const { photos, texts } = await readLoginPhotoStore();
 
-  return NextResponse.json({ photos, texts });
+  const response = NextResponse.json({ photos, texts });
+
+  // Cache for 5 minutes, login photos change when user updates them
+  response.headers.set("Cache-Control", "private, max-age=300, stale-while-revalidate=60");
+
+  return response;
 }
 
 export async function PUT(request: NextRequest) {
   const csrfError = assertSameOrigin(request);
   if (csrfError) return csrfError;
+
+  const sizeError = assertContentLength(request, 20 * 1024 * 1024); // 20MB for photos
+  if (sizeError) return sizeError;
 
   const authResponse = requireAdminSession(request);
   if (authResponse) return authResponse;

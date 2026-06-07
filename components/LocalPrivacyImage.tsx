@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { Camera } from "lucide-react";
-import { useSyncExternalStore } from "react";
+import { memo, useSyncExternalStore } from "react";
 
 type LocalPrivacyImageProps = {
   src: string;
@@ -77,7 +77,7 @@ const getServerPrivacySnapshot = () => false;
 const useLocalPrivacyMode = () =>
   useSyncExternalStore(subscribeToStaticPrivacyMode, isLocalPrivacyMode, getServerPrivacySnapshot);
 
-export function LocalPrivacyImage({
+export const LocalPrivacyImage = memo(function LocalPrivacyImage({
   src,
   alt,
   className,
@@ -105,9 +105,9 @@ export function LocalPrivacyImage({
       unoptimized
     />
   );
-}
+});
 
-export function LocalPrivacyImg({
+export const LocalPrivacyImg = memo(function LocalPrivacyImg({
   src,
   alt,
   className,
@@ -123,7 +123,7 @@ export function LocalPrivacyImg({
     // eslint-disable-next-line @next/next/no-img-element
     <img className={className} src={imageSrc} alt={alt} />
   );
-}
+});
 
 export function LocalPrivacyBadge() {
   const isLocalHost = useLocalPrivacyMode();

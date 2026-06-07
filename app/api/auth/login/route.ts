@@ -6,6 +6,7 @@ import {
   type AuthRole,
   verifyPassword,
 } from "@/lib/server/auth";
+import { checkRateLimit, getClientIp } from "@/lib/server/rateLimit";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -31,6 +32,19 @@ const parseLogoutPayload = (payload: unknown): AuthRole | "all" => {
 export async function POST(request: NextRequest) {
   const csrfError = assertSameOrigin(request);
   if (csrfError) return csrfError;
+
+  // Rate limit: 10 attempts per minute per IP
+  const ip = getClientIp(request);
+  const rateLimitResult = checkRateLimit(`login:${ip}`, 10, 60 * 1000);
+  if (!rateLimitResult.allowed) {
+    return NextResponse.json(
+      { error: "Too many login attempts" },
+      {
+        status: 429,
+        headers: { "Retry-After": String(Math.ceil(rateLimitResult.retryAfterMs / 1000)) },
+      },
+    );
+  }
 
   const payload = parseLoginPayload(await request.json().catch(() => null));
 

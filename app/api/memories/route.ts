@@ -11,7 +11,7 @@ import {
 import { isLocalPrivacyRequest, localPrivacyImagePlaceholder } from "@/lib/localPrivacy";
 import { requireAdminSession, requireSiteSession } from "@/lib/server/auth";
 import { getBundledDataFilePath, getPrivateDataFilePath } from "@/lib/server/dataDir";
-import { isRecord, isMemoryImage, assertSameOrigin } from "@/lib/server/validation";
+import { isRecord, isMemoryImage, assertSameOrigin, assertContentLength } from "@/lib/server/validation";
 import { createJsonStore } from "@/lib/server/createJsonStore";
 import { normalizeMemoryDate } from "@/lib/dateUtils";
 
@@ -27,9 +27,25 @@ const memoryStoreKey = "memories";
 const memoryTextMaxLength = 80;
 const maxPhotosPerMemory = 24;
 
+function isValidMemoryStore(value: unknown): value is MemoryStore {
+  if (!isRecord(value)) return false;
+  return Object.values(value).every(
+    (v) =>
+      Array.isArray(v) &&
+      v.every(
+        (m) =>
+          isRecord(m) &&
+          typeof m.id === "string" &&
+          typeof m.cityId === "string" &&
+          typeof m.date === "string",
+      ),
+  );
+}
+
 const memoryFileStore = createJsonStore<MemoryStore>({
   filePath: memoryStorePath,
   fallback: {},
+  validate: isValidMemoryStore,
   name: "memories",
 });
 
@@ -283,12 +299,20 @@ export async function GET(request: NextRequest) {
 
   const memories = await readMemoryStore();
 
-  return NextResponse.json({ memories: isLocalPrivacyRequest(request) ? maskMemoryPhotos(memories) : memories });
+  const response = NextResponse.json({ memories: isLocalPrivacyRequest(request) ? maskMemoryPhotos(memories) : memories });
+
+  // Cache for 5 minutes, allow stale while revalidating
+  response.headers.set("Cache-Control", "private, max-age=300, stale-while-revalidate=60");
+
+  return response;
 }
 
 export async function POST(request: NextRequest) {
   const csrfError = assertSameOrigin(request);
   if (csrfError) return csrfError;
+
+  const sizeError = assertContentLength(request, 15 * 1024 * 1024); // 15MB
+  if (sizeError) return sizeError;
 
   const authResponse = requireAdminSession(request);
   if (authResponse) return authResponse;
@@ -320,6 +344,9 @@ export async function POST(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   const csrfError = assertSameOrigin(request);
   if (csrfError) return csrfError;
+
+  const sizeError = assertContentLength(request, 50 * 1024 * 1024); // 50MB for bulk import
+  if (sizeError) return sizeError;
 
   const authResponse = requireAdminSession(request);
   if (authResponse) return authResponse;
