@@ -15,6 +15,8 @@ import {
   totalProvinceCount,
 } from "@/data/progress";
 import type { LocalMemoryStore } from "@/data/progress";
+import { cities } from "@/data/cities";
+import { provinces } from "@/data/provinces";
 
 describe("data/progress", () => {
   // =========================================================================
@@ -105,7 +107,6 @@ describe("data/progress", () => {
     });
 
     it("counts correctly when all provinces have lit cities", () => {
-      const { cities } = require("@/data/cities");
       const allCityIds: string[] = cities.map((c: { id: string }) => c.id);
       const allCities = new Set(allCityIds);
 
@@ -136,7 +137,6 @@ describe("data/progress", () => {
   // =========================================================================
   describe("totalProvinceCount", () => {
     it("reflects the number of provinces in the data module", () => {
-      const { provinces } = require("@/data/provinces");
       expect(totalProvinceCount).toBe(provinces.length);
     });
   });

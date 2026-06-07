@@ -218,17 +218,47 @@ app/
 ### 组件职责
 
 - **ChinaMap** -- 中国地图 SVG 渲染，省份点亮/未点亮，缩放平移，南海诸岛插图
+- **ChinaMapData** -- 中国地图 SSR 包装组件，在 RSC 中调用 `geo-server.ts` 预计算地图路径后传递给 ChinaMap
 - **ProvinceMap** -- 省份详情地图，城市标记，回忆卡片，照片查看器，添加/编辑/删除回忆
-- **MemoryTools** -- 设置页全功能：密码修改、纪念日、天气城市、Logo、登录照片、备份导入导出
+- **MemoryTools** -- 设置页入口组件，重导出 `settings/` 子模块
 - **MemoryNav** -- 顶部导航栏壳，提供页面布局和导航
 - **EntryExperience** -- 入口引导页，展示地图预览和天气
+- **HomeProgress** -- 首页进度组件，重导出 `home-progress/` 子模块（天气卡片、统计卡片）
+- **MemoryArchive** -- 回忆归档页组件
 - **LocalPrivacyImage** -- 隐私模式下的图像占位组件
+
+### 组件子目录
+
+经过拆分，以下大组件被拆分为职责更单一的子模块：
+
+```text
+components/province-map/          省份地图子模块
+  ProvinceMap.tsx                   省份详情页核心组件
+  markerLayouts.ts                  城市标记布局配置（坐标、尺寸）
+  imageCompression.ts               客户端图片压缩（Canvas 缩放 + JPEG 编码）
+  utils.ts                          共享常量、类型定义、图片工具函数
+  index.ts                          统一导出
+
+components/home-progress/         首页进度子模块
+  WeatherCard.tsx                   天气卡片组件（像素图标 + 天气框架）
+  StatsCards.tsx                    统计卡片（纪念日倒计时、在一起天数、相册进度、Logo）
+  index.ts                          统一导出
+
+components/settings/              设置页子模块
+  SettingsPage.tsx                  设置页主组件
+  PasswordSection.tsx               密码管理区域
+  BackupSection.tsx                 备份导入导出区域
+  LoginPhotoSection.tsx             登录页照片管理区域
+  shared.ts                         设置页共享类型和工具函数（StoredItem、图片压缩、日期计算）
+  index.ts                          统一导出
+```
 
 ### 组件间通信
 
 组件间不直接通信，通过以下机制同步状态：
 
 - **CustomEvent**: `mapofus:memories-updated`、`mapofus:admin-mode-updated`、`mapofus:settings-updated`、`mapofus:login-photos-updated`
+- **自定义 Hook**: `useLocalMemories`（基于 `useSyncExternalStore`）和 `useAdminMode` 封装状态订阅逻辑
 - **API 路由**: 所有数据变更通过 REST API，组件通过 fetch 获取最新数据
 - **URL 路由**: 页面间通过 Next.js router 导航
 
@@ -238,16 +268,23 @@ app/
 data/provinces.ts  <--------+
 data/cities.ts     <-----+  |
                           |  |
+data/cities-index.ts <---+  |
+  (城市轻量索引)          |  |
+                          |  |
 data/memories.ts          |  |
   (Memory 类型)           |  |
        |                  |  |
        v                  |  |
 data/progress.ts  --------+--+
   (已去城市/省份)         |
+  (LocalMemoryStore)     |
        |                  |
        v                  |
 data/provinceCityPlaces.ts-+
   (省份城市索引)          |
+                          |
+data/memoryUtils.ts       |
+  (回忆合并去重)          |
                           |
 data/appSettings.ts       |
   (应用设置)              |
@@ -258,18 +295,81 @@ data/adminMode.ts         |
 data/loginPhotoStore.ts   |
   (登录页照片)            |
                           |
+data/loginPhotoSlots.ts   |
+  (照片九宫格槽位)        |
+                          |
 lib/geo.ts  <-------------+
-  (D3 投影)               |
+  (D3 投影, 客户端)        |
        |                  |
        v                  |
-components/ChinaMap.tsx
-components/ProvinceMap.tsx
-
+components/ChinaMap.tsx   |
+components/ProvinceMap.tsx|
+                          |
+lib/geo-server.ts <-------+
+  (D3 投影, 服务端 SSR)   |
+       |                  |
+       v                  |
+components/ChinaMapData.tsx
+  (SSR 预计算地图路径)    |
+                          |
+lib/mapColors.ts  <-------+
+  (地图共享色板)           |
+                          |
+lib/typeGuards.ts <-------+
+  (isRecord 类型守卫)     |
+                          |
+lib/imageUtils.ts <-------+
+  (图片 URL 类型判断)     |
+                          |
+lib/dateUtils.ts  <-------+
+  (日期规范化)            |
+                          |
+hooks/useLocalMemories.ts
+  (记忆数据 useSyncExternalStore)
+                          |
+hooks/useAdminMode.ts
+  (管理员模式 Hook)       |
+                          |
 lib/server/auth.ts  <----- 独立模块，被所有 API Route 使用
 lib/server/supabase.ts <--- 独立模块，被所有 API Route 使用
 lib/server/dataDir.ts <---- 独立模块，被所有 API Route 使用
+lib/server/createJsonStore.ts <--- 原子写入存储，API Route 使用
+lib/server/shutdown.ts <--- 进程退出 Hook，Electron 和 createJsonStore 使用
+lib/server/validation.ts <- 请求校验，被 API Route 使用
 lib/localPrivacy.ts <------ 独立模块，被 API Route 和组件使用
 ```
+
+## 存储层核心：createJsonStore
+
+`lib/server/createJsonStore.ts` 是本地文件存储的核心抽象，替代了直接的 `fs.readFile` / `fs.writeFile` 调用：
+
+```text
+createJsonStore({ filePath, fallback, validate })
+  |
+  +-- read()        读取数据（内存缓存，首次命中磁盘）
+  +-- write(data)   原子写入（互斥锁序列化）
+  +-- update(fn)    读-改-写原子操作
+  +-- drain()       等待所有挂起写入完成
+```
+
+关键特性：
+
+- **互斥锁**：Promise 链互斥锁确保并发写入严格串行化
+- **原子写入**：先写 `.tmp.{pid}` 临时文件，再 rename 覆盖目标文件；Windows 下 fallback 为直接写入
+- **COW 备份**：每次写入前复制 `.bak` 备份，成功后删除
+- **崩溃恢复**：`recoverDataFiles()` 在启动时扫描并修复残留的 `.tmp` 和 `.bak` 文件
+- **内存缓存**：读取结果缓存在内存中，避免重复磁盘 IO
+
+## 进程退出：shutdown hooks
+
+`lib/server/shutdown.ts` 提供进程退出时的异步排空机制：
+
+```text
+registerShutdownHook(name, fn, timeoutMs)  -- 注册清理函数
+drainShutdownHooks()                       -- 执行所有注册的 hook
+```
+
+Electron 主进程通过 `globalThis.__MAP_OF_US_SHUTDOWN_DRAIN__` 调用排空，在退出前等待所有挂起的磁盘写入完成。每个 hook 有独立的超时限制（默认 5 秒）。
 
 ## API 端点
 
@@ -308,3 +408,43 @@ lib/localPrivacy.ts <------ 独立模块，被 API Route 和组件使用
 - **Node.js 18+**: 使用 `crypto.timingSafeEqual`、`fs/promises` 等现代 API
 - **Tailwind CSS 4**: 使用 `@theme` 指令定义设计令牌
 - **D3-geo**: 仅在客户端使用（通过 `lib/geo.ts`），GeoJSON 数据不传输到客户端
+
+## 测试架构
+
+测试使用 Vitest 运行，覆盖所有 API 端点和关键服务端模块。
+
+### 测试目录结构
+
+```text
+__tests__/
+  setup.ts                      全局测试配置（mock fs、supabase、环境变量）
+  api/
+    auth-login.test.ts          登录 API（5 个用例）
+    auth-password.test.ts       密码修改 API（4 个用例）
+    memories.test.ts            回忆 CRUD（14 个用例）
+    city-assets.test.ts         城市地标（8 个用例）
+    login-photos.test.ts        登录照片（8 个用例）
+  lib/server/
+    auth.test.ts                认证工具函数
+    createJsonStore.test.ts     原子写入存储（读写、互斥锁、崩溃恢复）
+    shutdown.test.ts            进程退出 Hook 排空
+    validation.test.ts          请求校验工具
+  data/
+    progress.test.ts            已去城市/省份计算
+  helpers/
+    factories.ts                测试数据工厂（创建测试用 Memory、设置等）
+    auth-utils.ts               认证测试工具（创建测试 token、Cookie）
+  perf-verification.test.ts     性能验证（排除在默认运行外）
+```
+
+### 测试策略
+
+- 所有测试强制使用本地文件存储模式（`MAP_OF_US_STORAGE_MODE=local`）
+- 使用临时目录（`os.tmpdir()`）隔离测试数据
+- API 测试通过 mock HTTP 请求覆盖完整请求-响应生命周期
+- `createJsonStore` 测试覆盖并发写入、崩溃恢复、缓存一致性
+- 超时设置 10 秒，适配 Windows 文件系统
+
+### 覆盖率
+
+V8 覆盖率默认覆盖 `app/api/**/*.ts` 和 `lib/server/` 下的认证、Supabase 模块。运行 `npm run test:coverage` 生成覆盖率报告。

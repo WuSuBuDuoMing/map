@@ -116,29 +116,67 @@ app/                        App Router 页面和 API
 
 components/                 UI 组件
   ChinaMap.tsx              中国地图（SVG + 缩放）
-  ProvinceMap.tsx           省份详情地图
-  MemoryTools.tsx           设置页完整功能
+  ChinaMapData.tsx          中国地图 SSR 包装（RSC 中调用 geo-server）
+  HomeProgress.tsx          首页进度组件（重导出 home-progress/ 子模块）
+  ProvinceMap.tsx           省份详情地图（旧入口，重导出到子目录）
+  MemoryTools.tsx           设置页入口（重导出到子目录）
   MemoryNav.tsx             导航栏壳
   EntryExperience.tsx       入口引导页
-  ...
+  MemoryArchive.tsx         回忆归档页
+  RandomPhotoCard.tsx       随机照片卡片
+  RecentMemories.tsx        最近回忆列表
+  LocalPrivacyImage.tsx     隐私模式图像占位
+  BackToLoginButton.tsx     返回登录按钮
+  province-map/             省份地图子模块
+    ProvinceMap.tsx           省份详情页核心组件
+    markerLayouts.ts          城市标记布局配置
+    imageCompression.ts       图片压缩工具
+    utils.ts                  共享常量和辅助函数
+    index.ts                  统一导出
+  home-progress/            首页进度子模块
+    WeatherCard.tsx           天气卡片组件
+    StatsCards.tsx            统计卡片（纪念日倒计时、在一起天数、相册进度、Logo）
+    index.ts                  统一导出
+  settings/                 设置页子模块
+    SettingsPage.tsx          设置页主组件
+    PasswordSection.tsx       密码管理区域
+    BackupSection.tsx         备份导入导出区域
+    LoginPhotoSection.tsx     登录页照片管理区域
+    shared.ts                 设置页共享类型和工具函数
+    index.ts                  统一导出
 
 data/                       数据定义和浏览器侧工具
   provinces.ts              34 省份定义
   cities.ts                 城市数据（含地标、坐标）
+  cities-index.ts           城市轻量索引（id、省份、中英文名）
   memories.ts               Memory 类型定义
-  progress.ts               已去城市/省份计算
+  memoryUtils.ts            回忆合并去重工具（种子 + 本地数据）
+  progress.ts               已去城市/省份计算 + LocalMemoryStore 类型
   appSettings.ts            应用设置读写
   adminMode.ts              管理员模式状态
   loginPhotoStore.ts        登录页照片客户端存储
+  loginPhotoSlots.ts        登录页照片九宫格槽位定义
   provinceCityPlaces.ts     省份城市索引
 
+hooks/                      自定义 React Hook
+  useLocalMemories.ts       记忆数据获取 + useSyncExternalStore 同步
+  useAdminMode.ts           管理员模式状态 Hook
+
 lib/                        核心库
-  geo.ts                    D3 地理投影和路径计算
+  geo.ts                    D3 地理投影和路径计算（客户端）
+  geo-server.ts             D3 地理投影服务端计算（SSR 组件使用）
+  mapColors.ts              地图共享色板
+  imageUtils.ts             图片 URL 类型判断
+  typeGuards.ts             共享类型守卫（isRecord）
+  dateUtils.ts              日期规范化工具
   localPrivacy.ts           隐私模式图像替换
   server/
     auth.ts                 HMAC Cookie 认证
     supabase.ts             Supabase 客户端 + 读写
     dataDir.ts              数据目录路径解析
+    createJsonStore.ts      原子写入 JSON 文件存储（互斥锁 + COW 备份）
+    shutdown.ts             进程退出 Hook 注册中心
+    validation.ts           请求校验工具（图片校验、CSRF、Content-Length）
 
 electron/                   Electron 主进程
   main.js                   窗口管理、Next.js 服务启动、认证配置
@@ -150,6 +188,8 @@ scripts/                    构建脚本
 
 __tests__/                  Vitest 测试套件
   api/                      API 端点测试
+  lib/server/               服务端模块测试（auth、createJsonStore、shutdown、validation）
+  data/                     数据模块测试（progress）
   helpers/                  测试工具（请求构造、数据工厂）
   setup.ts                  全局测试配置
 ```
@@ -158,14 +198,27 @@ __tests__/                  Vitest 测试套件
 
 - **`data/provinces.ts`** -- 34 省份 ID、adcode、中英文名、是否已点亮
 - **`data/cities.ts`** -- 城市数据：坐标、省份归属、地标、精灵图
+- **`data/cities-index.ts`** -- 城市轻量索引（id、省份、中英文名），用于 progress 计算
 - **`data/memories.ts`** -- `Memory` 接口定义和时间排序工具
-- **`data/progress.ts`** -- 根据回忆数据计算已去城市和已去省份
+- **`data/memoryUtils.ts`** -- 种子回忆和本地回忆的合并去重（`collectMemories`）
+- **`data/progress.ts`** -- 根据回忆数据计算已去城市和已去省份，导出 `LocalMemoryStore` 类型
 - **`data/appSettings.ts`** -- 应用设置的 localStorage 读写和校验
 - **`data/adminMode.ts`** -- 管理员模式的 sessionStorage 读写
 - **`data/loginPhotoStore.ts`** -- 登录页照片的 API 读写 + 旧版迁移
+- **`data/loginPhotoSlots.ts`** -- 登录页照片九宫格槽位定义
 - **`data/provinceCityPlaces.ts`** -- 省份-城市索引，用于省份详情页
-- **`lib/geo.ts`** -- GeoJSON 加载、D3 投影、路径生成
+- **`hooks/useLocalMemories.ts`** -- 记忆数据单次获取 + `useSyncExternalStore` 全局同步
+- **`hooks/useAdminMode.ts`** -- 管理员模式状态 Hook，监听 CustomEvent 自动更新
+- **`lib/geo.ts`** -- GeoJSON 加载、D3 投影、路径生成（客户端）
+- **`lib/geo-server.ts`** -- D3 投影服务端计算，SSR 时预计算地图路径
+- **`lib/mapColors.ts`** -- 地图共享色板（中国地图和省份地图共用）
+- **`lib/imageUtils.ts`** -- 图片 URL 类型判断（data URL vs https URL）
+- **`lib/typeGuards.ts`** -- `isRecord` 类型守卫，客户端/服务端共用
+- **`lib/dateUtils.ts`** -- 日期字符串规范化（`YYYY.M.D` -> `YYYY.MM.DD`）
 - **`lib/server/auth.ts`** -- HMAC-SHA256 Cookie 签名和验证
+- **`lib/server/createJsonStore.ts`** -- 原子写入 JSON 存储（互斥锁、COW 备份、崩溃恢复）
+- **`lib/server/shutdown.ts`** -- 进程退出 Hook 注册中心，Electron 退出前排空
+- **`lib/server/validation.ts`** -- 请求校验工具（图片 URL 校验、CSRF 防护、Content-Length 检查）
 
 ### 数据存储架构
 
@@ -223,8 +276,12 @@ npm run test:coverage
 - 回忆 API：完整 CRUD 生命周期 + 输入校验
 - 城市地标 API：读写删除 + 权限检查
 - 登录照片 API：照片和文字管理 + 迁移逻辑
+- 服务端模块：`createJsonStore` 原子写入、`shutdown` Hook 排空、`validation` 校验、`auth` 认证逻辑
+- 数据模块：`progress` 已去城市/省份计算
 
 测试使用独立的临时目录，不会影响项目数据文件。所有测试强制使用本地文件存储模式，不连接 Supabase。
+
+> **Windows 注意事项**：Vitest 在包含非 ASCII 字符（如中文）的路径下可能无法正常运行。如果 `npm test` 报错，建议将项目移到纯 ASCII 路径（如 `C:\dev\map-of-us`），或在项目根目录下直接运行（当前工作目录已正确配置）。测试超时默认 10 秒（`vitest.config.ts` 中的 `testTimeout`），适用于 Windows 文件系统。
 
 ## 环境变量
 
@@ -320,12 +377,27 @@ npm run dist:dir
      |  ChinaMap        |          |  速率限制        |
      |  ProvinceMap     |          |  输入校验        |
      |  MemoryTools     |          +--------+--------+
-     +-----------------+                    |
-                                   +--------v--------+
-                                   |  存储层          |
-                                   |  本地文件 /      |
-                                   |  Supabase        |
-                                   +-----------------+
+     +--------+--------+                    |
+              |                    +--------v--------+
+     +--------v--------+          |  存储层          |
+     |  hooks/          |          |  createJsonStore |
+     |  useLocalMemories|          |  (原子写入+互斥锁)|
+     |  useAdminMode    |          +--------+--------+
+     +--------+--------+                    |
+              |                    +--------v--------+
+     +--------v--------+          |  本地 JSON 文件 / |
+     |  data/           |          |  Supabase DB     |
+     |  progress        |          +-----------------+
+     |  memoryUtils     |
+     |  appSettings     |
+     +------------------+
+              |
+     +--------v--------+
+     |  lib/            |
+     |  geo-server.ts   |
+     |  mapColors.ts    |
+     |  shutdown.ts     |
+     +------------------+
 ```
 
 ## CI/CD

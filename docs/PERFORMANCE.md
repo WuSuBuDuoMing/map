@@ -70,13 +70,15 @@
 **变更**: 大组件拆分为更小的职责单一模块。
 
 **拆分方案**:
-- `ProvinceMap.tsx` -- 省份地图渲染、回忆卡片、照片查看器
-- `MemoryTools.tsx` -- 设置页的各个功能区域
-- `MemoryNav.tsx` -- 导航栏壳，提供布局和导航
+- `ProvinceMap.tsx` 拆分为 `province-map/` 子目录：核心地图组件、标记布局配置、图片压缩工具、共享常量
+- `MemoryTools.tsx` 拆分为 `settings/` 子目录：密码区域、备份区域、登录照片区域、共享工具
+- `HomeProgress.tsx` 拆分为 `home-progress/` 子目录：天气卡片、统计卡片
+- `ChinaMapData.tsx` 新增 SSR 包装组件，在 RSC 中预计算地图路径
 
 **效果**:
-- 单个文件代码行数减少，可读性提升
+- 单个文件代码行数显著减少，可读性提升
 - 按需加载潜力更大
+- 子模块间职责清晰，便于独立修改
 
 ### 7. 输入校验
 
@@ -97,17 +99,87 @@
 
 ### 8. 测试覆盖
 
-**变更**: 约 90 个测试用例覆盖所有 API 端点。
+**变更**: 约 90 个测试用例覆盖所有 API 端点和关键服务端模块。
 
 **覆盖范围**:
+
 - 认证: 登录、登出、密码修改、权限检查、过期 token、无效签名
 - 回忆: CRUD 生命周期、输入校验、边界情况、未知城市
 - 城市地标: 读写删除、权限检查
 - 登录照片: 照片管理、文案管理、批量导入
+- 服务端模块: `createJsonStore` 原子写入和互斥锁、`shutdown` Hook 排空、`validation` 校验工具、`auth` 认证工具函数
+- 数据模块: `progress` 已去城市/省份计算
 
 **效果**:
+
 - 回归保护，新变更不会破坏已有功能
 - 测试使用临时目录，隔离且可重复
+
+### 9. useLocalMemories 去重获取
+
+**变更**: 引入 `hooks/useLocalMemories.ts`，基于 `useSyncExternalStore` 实现记忆数据的全局单例获取和订阅。
+
+**方式**:
+
+- 模块级缓存确保 `/api/memories` 在每次页面加载中最多请求一次，无论多少组件调用 `useLocalMemories`
+- 使用 `useSyncExternalStore` 保证多组件间的状态一致性（不会出现撕裂读）
+- 监听 `mapofus:memories-updated` CustomEvent，当任何组件修改回忆后自动同步最新数据
+- SSR 兼容：`getServerSnapshot` 返回当前缓存值
+
+**效果**:
+
+- 消除多个组件重复请求 `/api/memories` 的问题（之前首页多个卡片各自 fetch）
+- 减少不必要的网络请求和渲染开销
+- 状态同步可靠，避免 CustomEvent 监听器泄漏
+
+### 10. MemoryCard 渲染优化
+
+**变更**: 通过 `province-map/utils.ts` 抽取共享常量和组件级 memoization，减少省份详情页的不必要重渲染。
+
+**方式**:
+
+- 共享常量（`memoryCardWidth`、`memoryCardGap`、`memoryCardMaxHeight` 等）集中定义在 `utils.ts`
+- `emptyMemories` 空数组常量避免每次渲染创建新引用
+- 图片压缩逻辑抽取到 `imageCompression.ts`，与组件渲染分离
+
+**效果**:
+
+- 省份详情页城市列表和回忆卡片的重渲染范围缩小
+- 图片处理不再阻塞 UI 线程
+
+### 11. 服务端 D3 预计算 (geo-server)
+
+**变更**: 新增 `lib/geo-server.ts`，将 D3 地理投影计算从客户端移至服务端 RSC 渲染阶段。
+
+**方式**:
+
+- `ChinaMapData.tsx` 作为 SSR 包装组件，在服务端调用 `getChinaMapPaths()` 预计算所有省份 SVG 路径
+- 预计算结果（path data + centroid 坐标）通过 props 传递给客户端 `ChinaMap` 组件
+- 同样支持省份地图路径预计算 (`getProvinceMapPaths()`) 和城市坐标投影 (`projectCitiesForProvince()`)
+
+**效果**:
+
+- 客户端不再执行 D3 投影计算，减少了 JavaScript 执行时间
+- 首次内容绘制（FCP）更快
+- SVG 路径在服务端计算后直接渲染，避免客户端 hydration 时的闪烁
+
+### 12. 原子写入存储 (createJsonStore)
+
+**变更**: 新增 `lib/server/createJsonStore.ts`，替代直接的 `fs.readFile` / `fs.writeFile` 调用，提供线程安全的本地文件存储。
+
+**方式**:
+
+- Promise 链互斥锁确保并发写入严格串行化，防止数据竞争
+- 原子写入：先写 PID 作用域的 `.tmp` 文件，再 rename 覆盖目标文件
+- COW 备份：每次写入前复制 `.bak`，成功后删除；失败时从 `.bak` 恢复
+- 内存缓存：读取结果缓存在内存中，避免重复磁盘 IO
+- `recoverDataFiles()` 在启动时修复 `.tmp` / `.bak` 残留
+
+**效果**:
+
+- 并发请求不会导致数据损坏或丢失
+- 崩溃后自动恢复到一致状态
+- 读取性能提升（内存缓存命中时零磁盘 IO）
 
 ## 性能测量方法
 
@@ -192,9 +264,10 @@ npm run test:coverage
 
 以下优化尚未实施，可作为后续改进：
 
-1. **图片压缩**: 上传时自动压缩大图片，减少存储和传输体积
+1. **图片压缩**: 上传时自动压缩大图片（记忆页的 `readCompressedImageDataUrl` 已部分实现，可扩展到地标图和登录照片）
 2. **懒加载**: 省份详情页的回忆列表按需加载
 3. **Service Worker**: 离线缓存地图页面和静态资源
 4. **图片 CDN**: Web 模式下使用 CDN 加速图片加载
 5. **回忆表迁移**: 从 KV 存储迁移到 `memories` 规范化表，提升查询性能
 6. **虚拟滚动**: 回忆归档页的长列表使用虚拟滚动
+7. **web worker**: 将 D3 路径计算进一步移到 web worker，释放主线程
