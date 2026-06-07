@@ -18,9 +18,11 @@ import { chinaFeatures, makePath, makeProjectionForProvince, provinceIdOf } from
 import { cityFallbackSprite, getCitiesByProvince, type City } from "@/data/cities";
 import { getLatestMemory, sortMemoriesByTime, type Memory } from "@/data/memories";
 import { getLitCityIds, memoryStoreUpdatedEvent, type LocalMemoryStore } from "@/data/progress";
-import { adminModeUpdatedEvent, readAdminMode } from "@/data/adminMode";
 import type { Province } from "@/data/provinces";
 import { LocalPrivacyImage, LocalPrivacyImg } from "@/components/LocalPrivacyImage";
+import { useAdminMode } from "@/hooks/useAdminMode";
+import { isBrowserImageUrl } from "@/lib/imageUtils";
+import { mapColors as colors } from "@/lib/mapColors";
 
 interface ProvinceMapProps {
   province: Province;
@@ -53,16 +55,6 @@ type DragState = {
 type MemoryPanelTab = "memory" | "gallery" | "history";
 type CityAssetStore = Record<string, string>;
 
-const colors = {
-  cream: "#FAFBF7",
-  dim: "#D8DDD8",
-  ink: "#5A6670",
-  sakura: "#F5DCE0",
-  bloom: "#E8B8C2",
-  mist: "#D6E8F0",
-  sky: "#A8C8DC",
-};
-
 const spring = { type: "spring" as const, stiffness: 100, damping: 20 };
 const memoryTextMaxLength = 80;
 const maxPhotosPerMemory = 24;
@@ -85,28 +77,6 @@ const revokeObjectUrl = (url?: string | null) => {
 const isDataImageUrl = (url?: string | null): url is string =>
   typeof url === "string" && url.startsWith("data:image/");
 
-const isBrowserImageUrl = (url?: string | null): url is string =>
-  typeof url === "string" && (url.startsWith("data:image/") || url.startsWith("https://"));
-
-const useAdminMode = () => {
-  const [isAdmin, setIsAdmin] = useState(false);
-
-  useEffect(() => {
-    const timer = window.setTimeout(() => setIsAdmin(readAdminMode()), 0);
-    const handleAdminMode = (event: Event) => {
-      setIsAdmin(Boolean((event as CustomEvent<boolean>).detail));
-    };
-
-    window.addEventListener(adminModeUpdatedEvent, handleAdminMode);
-
-    return () => {
-      window.clearTimeout(timer);
-      window.removeEventListener(adminModeUpdatedEvent, handleAdminMode);
-    };
-  }, []);
-
-  return isAdmin;
-};
 
 const normalizeMemoryDate = (value: string) => {
   const match = value.match(/^(\d{4})\.(\d{1,2})\.(\d{1,2})$/);

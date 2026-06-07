@@ -20,21 +20,15 @@ type CityAssetStore = Record<string, string>;
 
 const cityAssetStorePath = getPrivateDataFilePath("cityAssets.private.json");
 const cityAssetStoreKey = "city-assets";
-const imageMaxLength = 12_000_000;
 
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === "object" && value !== null && !Array.isArray(value);
-
-const isAllowedImage = (value: string) =>
-  value.length <= imageMaxLength &&
-  (value.startsWith("/sprites/") || value.startsWith("https://") || value.startsWith("data:image/"));
+import { isRecord, isCityAssetImage } from "@/lib/server/validation";
 
 function normalizeCityAssetStore(value: unknown): CityAssetStore {
   if (!isRecord(value)) return {};
 
   return Object.fromEntries(
     Object.entries(value).filter(([cityId, image]) =>
-      cities.some((city) => city.id === cityId) && typeof image === "string" && isAllowedImage(image),
+      cities.some((city) => city.id === cityId) && typeof image === "string" && isCityAssetImage(image),
     ),
   ) as CityAssetStore;
 }
@@ -73,7 +67,7 @@ function parseCityAssetPayload(payload: unknown) {
     typeof cityId !== "string" ||
     typeof image !== "string" ||
     !cities.some((city) => city.id === cityId) ||
-    !isAllowedImage(image)
+    !isCityAssetImage(image)
   ) {
     return null;
   }

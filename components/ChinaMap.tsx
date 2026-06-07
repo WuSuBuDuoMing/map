@@ -1,39 +1,27 @@
 "use client";
 
-import { useEffect, useMemo, useState, type CSSProperties } from "react";
+import { useMemo, useState, type CSSProperties } from "react";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { Minus, Plus, RotateCcw } from "lucide-react";
-import {
-  chinaFeatures,
-  dashLineFeature,
-  makePath,
-  makeProjection,
-  makeProjectionForFeature,
-  provinceIdOf,
-} from "@/lib/geo";
+import type { MapPathData, DashLinePathData } from "@/lib/geo-server";
 import {
   getLitCityIds,
   getLitProvinceIds,
-  memoryStoreUpdatedEvent,
-  type LocalMemoryStore,
 } from "@/data/progress";
+import type { LocalMemoryStore } from "@/data/progress";
 import { provinces } from "@/data/provinces";
+import { useLocalMemories } from "@/hooks/useLocalMemories";
+import { mapColors as colors } from "@/lib/mapColors";
 
 interface ChinaMapProps {
   width?: number;
   height?: number;
   className?: string;
+  mapPaths?: MapPathData[];
+  dashLinePath?: DashLinePathData;
 }
 
-const colors = {
-  cream: "#FAFBF7",
-  dim: "#D8DDD8",
-  ink: "#5A6670",
-  sakura: "#F5DCE0",
-  bloom: "#E8B8C2",
-  sky: "#A8C8DC",
-};
 
 const provinceById = new Map(provinces.map((province) => [province.id, province]));
 const easyTapProvinceIds = new Set(["hongkong", "macau"]);
@@ -43,31 +31,23 @@ const stableCoordinate = (value: number) => Number(value.toFixed(3));
 
 // The South China Sea ten-dash line, drawn as a small standalone inset box so it
 // is always visible and never overlapped by floating cards on the main map.
-export function SouthChinaSeaInset() {
-  const inset = useMemo(() => {
-    if (!dashLineFeature) return null;
+export function SouthChinaSeaInset({ dashLinePath }: { dashLinePath?: DashLinePathData }) {
+  if (!dashLinePath?.d) return null;
 
-    const insetWidth = 116;
-    const insetHeight = 162;
-    const projection = makeProjectionForFeature(dashLineFeature, insetWidth, insetHeight, 12);
-    const path = makePath(projection);
-
-    return { width: insetWidth, height: insetHeight, d: path(dashLineFeature as never) ?? "" };
-  }, []);
-
-  if (!inset || !inset.d) return null;
+  const insetWidth = 116;
+  const insetHeight = 162;
 
   return (
     <div className="w-fit rounded-[8px] border border-[#D8DDD8]/80 bg-[#FAFBF7]/70 p-1 shadow-[0_10px_28px_rgba(90,102,112,0.08)] backdrop-blur">
       <svg
-        width={inset.width}
-        height={inset.height}
-        viewBox={`0 0 ${inset.width} ${inset.height}`}
+        width={insetWidth}
+        height={insetHeight}
+        viewBox={`0 0 ${insetWidth} ${insetHeight}`}
         role="img"
         aria-label="南海诸岛"
       >
         <path
-          d={inset.d}
+          d={dashLinePath.d}
           fill={colors.ink}
           fillOpacity="0.55"
           stroke={colors.ink}
@@ -75,8 +55,8 @@ export function SouthChinaSeaInset() {
           strokeWidth="0.8"
         />
         <text
-          x={inset.width / 2}
-          y={inset.height - 5}
+          x={insetWidth / 2}
+          y={insetHeight - 5}
           textAnchor="middle"
           fontSize="9"
           fontWeight="600"
@@ -90,62 +70,28 @@ export function SouthChinaSeaInset() {
   );
 }
 
-export default function ChinaMap({ width = 1100, height = 860, className }: ChinaMapProps) {
+export default function ChinaMap({ width = 1100, height = 860, className, mapPaths = [], dashLinePath }: ChinaMapProps) {
   const [hoveredId, setHoveredId] = useState<string | null>(null);
-  const [localMemories, setLocalMemories] = useState<LocalMemoryStore>({});
+  const localMemories = useLocalMemories();
   const [zoom, setZoom] = useState(1);
   const router = useRouter();
-
-  useEffect(() => {
-    let cancelled = false;
-    const handleMemoryUpdate = (event: Event) => {
-      const detail = (event as CustomEvent<LocalMemoryStore>).detail;
-      if (detail) setLocalMemories(detail);
-    };
-
-    async function loadLocalMemories() {
-      const response = await fetch("/api/memories", { cache: "no-store" }).catch(() => null);
-      if (!response?.ok) return;
-
-      const data = (await response.json().catch(() => null)) as
-        | { memories?: LocalMemoryStore }
-        | null;
-
-      if (!cancelled && data?.memories) setLocalMemories(data.memories);
-    }
-
-    window.addEventListener(memoryStoreUpdatedEvent, handleMemoryUpdate);
-    loadLocalMemories();
-
-    return () => {
-      cancelled = true;
-      window.removeEventListener(memoryStoreUpdatedEvent, handleMemoryUpdate);
-    };
-  }, []);
 
   const litProvinceIds = useMemo(
     () => getLitProvinceIds(getLitCityIds(localMemories)),
     [localMemories],
   );
 
-  const paths = useMemo(() => {
-    const projection = makeProjection(width, height, 24);
-    const path = makePath(projection);
-
-    return chinaFeatures.map((feature) => {
-      const id = provinceIdOf(feature);
-      const [cx, cy] = path.centroid(feature as never);
-
-      return {
-        id,
-        d: path(feature as never) ?? "",
-        x: stableCoordinate(cx),
-        y: stableCoordinate(cy),
-        province: provinceById.get(id),
-        lit: litProvinceIds.has(id),
-      };
-    });
-  }, [height, litProvinceIds, width]);
+  const paths = useMemo(
+    () =>
+      mapPaths.map((mp) => ({
+        ...mp,
+        x: mp.cx,
+        y: mp.cy,
+        province: provinceById.get(mp.id),
+        lit: litProvinceIds.has(mp.id),
+      })),
+    [mapPaths, litProvinceIds],
+  );
 
   const hoveredPath = paths.find((path) => path.id === hoveredId);
   const zoomProgress = ((zoom - minZoom) / (maxZoom - minZoom)) * 100;

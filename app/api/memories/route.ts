@@ -13,6 +13,7 @@ import {
 import { isLocalPrivacyRequest, localPrivacyImagePlaceholder } from "@/lib/localPrivacy";
 import { requireAdminSession, requireSiteSession } from "@/lib/server/auth";
 import { getBundledDataFilePath, getPrivateDataFilePath } from "@/lib/server/dataDir";
+import { isRecord, isMemoryImage, imageMaxLength } from "@/lib/server/validation";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -24,7 +25,6 @@ const memoryStorePath = getPrivateDataFilePath("localMemories.private.json");
 const seedMemoryStorePath = getBundledDataFilePath("localMemories.json");
 const memoryStoreKey = "memories";
 const memoryTextMaxLength = 80;
-const imageMaxLength = 12_000_000;
 const maxPhotosPerMemory = 24;
 
 const normalizeMemoryDate = (value: string) => {
@@ -47,20 +47,10 @@ const normalizeMemoryDate = (value: string) => {
   return `${rawYear}.${String(month).padStart(2, "0")}.${String(day).padStart(2, "0")}`;
 };
 
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === "object" && value !== null && !Array.isArray(value);
-
-const isAllowedImage = (value: string) =>
-  value.length <= imageMaxLength &&
-  (value.startsWith("/photos/") ||
-    value.startsWith("/sprites/") ||
-    value.startsWith("https://") ||
-    value.startsWith("data:image/"));
-
 const normalizePhotos = (value: unknown) => {
   if (!Array.isArray(value)) return [];
 
-  return value.filter((photo): photo is string => typeof photo === "string" && isAllowedImage(photo));
+  return value.filter((photo): photo is string => typeof photo === "string" && isMemoryImage(photo));
 };
 
 function normalizeStoredMemory(cityId: string, value: unknown): Memory[] {
@@ -77,7 +67,7 @@ function normalizeStoredMemory(cityId: string, value: unknown): Memory[] {
       typeof entry.text === "string" && entry.text.trim().length > 0
         ? entry.text.trim()
         : "这段回忆还等着我们慢慢写上。";
-    const storedImage = typeof entry.image === "string" && isAllowedImage(entry.image) ? entry.image : "";
+    const storedImage = typeof entry.image === "string" && isMemoryImage(entry.image) ? entry.image : "";
     const photos = normalizePhotos(entry.photos);
     const image = storedImage || photos[0] || city.sprite;
     const id = typeof entry.id === "string" ? entry.id : `${city.id}-local-${index}`;
@@ -189,7 +179,7 @@ function parseMemoryPayload(payload: unknown): Memory | null {
     !normalizedDate ||
     trimmedText.length === 0 ||
     trimmedText.length > memoryTextMaxLength ||
-    (typeof image === "string" && image.length > 0 && !isAllowedImage(image))
+    (typeof image === "string" && image.length > 0 && !isMemoryImage(image))
   ) {
     return null;
   }
@@ -220,7 +210,7 @@ function parseCoverPayload(payload: unknown) {
     typeof cityId !== "string" ||
     typeof memoryId !== "string" ||
     typeof coverImage !== "string" ||
-    !isAllowedImage(coverImage)
+    !isMemoryImage(coverImage)
   ) {
     return null;
   }
@@ -258,7 +248,7 @@ function parseEditPayload(payload: unknown) {
     !normalizedDate ||
     trimmedText.length === 0 ||
     trimmedText.length > memoryTextMaxLength ||
-    !isAllowedImage(image)
+    !isMemoryImage(image)
   ) {
     return null;
   }

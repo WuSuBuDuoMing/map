@@ -47,6 +47,27 @@ data/*.backup-*
 # vercel
 .vercel
 
+# performance benchmarks
+/perf-results/
+/.perf-test-*
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# archives and installers
+*.zip
+*.rar
+*.7z
+*.AppImage
+*.deb
+*.rpm
+
+# OS junk
+Thumbs.db
+Desktop.ini
+
+# IDE
+.idea/
+.env.local
+map-of-us.tar.gz

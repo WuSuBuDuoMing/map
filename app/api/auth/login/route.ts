@@ -10,8 +10,7 @@ import {
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === "object" && value !== null && !Array.isArray(value);
+import { isRecord } from "@/lib/server/validation";
 
 const parseLoginPayload = (payload: unknown): { role: AuthRole; password: string } | null => {
   if (!isRecord(payload) || typeof payload.password !== "string") return null;

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import {
   ChevronRight,
   Heart,
@@ -15,19 +15,16 @@ import {
   sortMemoriesByTime,
   type Memory,
 } from "@/data/memories";
-import {
-  memoryStoreUpdatedEvent,
-  type LocalMemoryStore,
-} from "@/data/progress";
+import type { LocalMemoryStore } from "@/data/progress";
 import { LocalPrivacyImage, LocalPrivacyImg } from "@/components/LocalPrivacyImage";
+import { useLocalMemories } from "@/hooks/useLocalMemories";
+import { isBrowserImageUrl } from "@/lib/imageUtils";
 
 type ArchiveView = "city" | "timeline";
 type MemoryItem = {
   memory: Memory;
   city?: (typeof cities)[number];
 };
-
-const isBrowserImageUrl = (url: string) => url.startsWith("data:image/") || url.startsWith("https://");
 
 const memoryMonthLabel = (memory: Memory) => {
   const match = /^(\d{4})\.(\d{2})\.\d{2}$/.exec(memory.date);
@@ -85,36 +82,9 @@ function MemoryCard({ item, compact = false }: Readonly<{ item: MemoryItem; comp
 }
 
 export default function MemoryArchive() {
-  const [localMemories, setLocalMemories] = useState<LocalMemoryStore>({});
+  const localMemories = useLocalMemories();
   const [view, setView] = useState<ArchiveView>("city");
   const [expandedCities, setExpandedCities] = useState<Set<string>>(new Set());
-
-  useEffect(() => {
-    let cancelled = false;
-    const handleMemoryUpdate = (event: Event) => {
-      const detail = (event as CustomEvent<LocalMemoryStore>).detail;
-      if (detail) setLocalMemories(detail);
-    };
-
-    async function loadLocalMemories() {
-      const response = await fetch("/api/memories", { cache: "no-store" }).catch(() => null);
-      if (!response?.ok) return;
-
-      const data = (await response.json().catch(() => null)) as
-        | { memories?: LocalMemoryStore }
-        | null;
-
-      if (!cancelled && data?.memories) setLocalMemories(data.memories);
-    }
-
-    window.addEventListener(memoryStoreUpdatedEvent, handleMemoryUpdate);
-    loadLocalMemories();
-
-    return () => {
-      cancelled = true;
-      window.removeEventListener(memoryStoreUpdatedEvent, handleMemoryUpdate);
-    };
-  }, []);
 
   const memoryItems = useMemo<MemoryItem[]>(() => {
     const localItems = Object.values(localMemories).flat();

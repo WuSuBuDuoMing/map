@@ -6,8 +6,7 @@ import { requireAdminSession } from "@/lib/server/auth";
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === "object" && value !== null && !Array.isArray(value);
+import { isRecord } from "@/lib/server/validation";
 
 export async function POST(request: NextRequest) {
   const authError = requireAdminSession(request);

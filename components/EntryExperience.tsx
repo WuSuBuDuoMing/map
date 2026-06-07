@@ -16,81 +16,26 @@ import {
   readLoginPhotoTexts,
   readLoginPhotos,
 } from "@/data/loginPhotoStore";
+import { loginPhotoSlots } from "@/data/loginPhotoSlots";
 
 const passcodeLength = 4;
-const loginPhotoVersion = "placeholder-20260601";
-const loginPhotoPath = (fileName: string) => `/photos/login/${fileName}.jpg?v=${loginPhotoVersion}`;
 
-const stamps = [
-  {
-    id: "hangzhou",
-    city: "杭州",
-    label: "春日湖畔",
-    note: "风从西湖边吹过来，像把那一天重新翻开。",
-    photo: loginPhotoPath("hangzhou"),
-  },
-  {
-    id: "shanghai",
-    city: "上海",
-    label: "外滩傍晚",
-    note: "灯亮起来的时候，城市像一张慢慢显影的照片。",
-    photo: loginPhotoPath("shanghai"),
-  },
-  {
-    id: "macau",
-    city: "澳门",
-    label: "旧城花影",
-    note: "小巷、坡道和花影，都被收进同一只相框。",
-    photo: loginPhotoPath("macau"),
-  },
-  {
-    id: "hongkong",
-    city: "香港",
-    label: "夜色亮起",
-    note: "海面反光的时候，回忆也跟着亮了一下。",
-    photo: loginPhotoPath("hongkong"),
-  },
-  {
-    id: "qingdao",
-    city: "青岛",
-    label: "海风经过",
-    note: "海边的风把照片吹得很亮，也把时间吹慢了。",
-    photo: loginPhotoPath("qingdao"),
-  },
-  {
-    id: "zhengzhou",
-    city: "郑州",
-    label: "见面那天",
-    note: "有些城市不是风景，是故事真正开始的地方。",
-    photo: loginPhotoPath("zhengzhou"),
-  },
-  {
-    id: "zhuhai",
-    city: "珠海",
-    label: "海边散步",
-    note: "浪慢慢退下去，脚步和心跳都变轻了。",
-    photo: loginPhotoPath("zhuhai"),
-  },
-  {
-    id: "guangzhou",
-    city: "广州",
-    label: "旧街热气",
-    note: "热气、灯光和街角的声音，拼成一张很近的照片。",
-    photo: loginPhotoPath("guangzhou"),
-  },
-  {
-    id: "jinan",
-    city: "济南",
-    label: "泉边小记",
-    note: "水声很轻，像把回忆放进透明的玻璃瓶里。",
-    photo: loginPhotoPath("jinan"),
-  },
-] as const;
+const stampNotes: Record<string, string> = {
+  hangzhou: "风从西湖边吹过来，像把那一天重新翻开。",
+  shanghai: "灯亮起来的时候，城市像一张慢慢显影的照片。",
+  macau: "小巷、坡道和花影，都被收进同一只相框。",
+  hongkong: "海面反光的时候，回忆也跟着亮了一下。",
+  qingdao: "海边的风把照片吹得很亮，也把时间吹慢了。",
+  zhengzhou: "有些城市不是风景，是故事真正开始的地方。",
+  zhuhai: "浪慢慢退下去，脚步和心跳都变轻了。",
+  guangzhou: "热气、灯光和街角的声音，拼成一张很近的照片。",
+  jinan: "水声很轻，像把回忆放进透明的玻璃瓶里。",
+};
 
 const keys = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "clear", "0", "delete"] as const;
 
 type Stamp = {
-  id: (typeof stamps)[number]["id"];
+  id: (typeof loginPhotoSlots)[number]["id"];
   city: string;
   label: string;
   note: string;
@@ -195,11 +140,12 @@ export default function EntryExperience() {
   }, []);
 
   const loginStamps = useMemo<Stamp[]>(() => {
-    return stamps.map((stamp) => ({
-      ...stamp,
-      city: loginPhotoTexts?.[stamp.id]?.city ?? settings.loginPhotoTexts?.[stamp.id]?.city ?? stamp.city,
-      label: loginPhotoTexts?.[stamp.id]?.label ?? settings.loginPhotoTexts?.[stamp.id]?.label ?? stamp.label,
-      photo: loginPhotos[stamp.id] ?? settings.loginPhotos?.[stamp.id] ?? stamp.photo,
+    return loginPhotoSlots.map((slot) => ({
+      id: slot.id,
+      city: loginPhotoTexts?.[slot.id]?.city ?? settings.loginPhotoTexts?.[slot.id]?.city ?? slot.city,
+      label: loginPhotoTexts?.[slot.id]?.label ?? settings.loginPhotoTexts?.[slot.id]?.label ?? slot.label,
+      note: stampNotes[slot.id] ?? "",
+      photo: loginPhotos[slot.id] ?? settings.loginPhotos?.[slot.id] ?? slot.fallback,
     }));
   }, [loginPhotoTexts, loginPhotos, settings.loginPhotoTexts, settings.loginPhotos]);
 

@@ -8,9 +8,8 @@ import { cities } from "@/data/cities";
 import {
   getLitCityIds,
   getLitProvinceIds,
-  memoryStoreUpdatedEvent,
-  type LocalMemoryStore,
 } from "@/data/progress";
+import type { LocalMemoryStore } from "@/data/progress";
 import { TOTAL_PROVINCES } from "@/data/provinces";
 import {
   appSettingsUpdatedEvent,
@@ -21,6 +20,7 @@ import {
   readAppSettings,
   type AppSettings,
 } from "@/data/appSettings";
+import { useLocalMemories } from "@/hooks/useLocalMemories";
 
 const weatherFallbackTemp = 24;
 
@@ -528,34 +528,7 @@ function CoupleLogo() {
 }
 
 function useProgress() {
-  const [localMemories, setLocalMemories] = useState<LocalMemoryStore>({});
-
-  useEffect(() => {
-    let cancelled = false;
-    const handleMemoryUpdate = (event: Event) => {
-      const detail = (event as CustomEvent<LocalMemoryStore>).detail;
-      if (detail) setLocalMemories(detail);
-    };
-
-    async function loadLocalMemories() {
-      const response = await fetch("/api/memories", { cache: "no-store" }).catch(() => null);
-      if (!response?.ok) return;
-
-      const data = (await response.json().catch(() => null)) as
-        | { memories?: LocalMemoryStore }
-        | null;
-
-      if (!cancelled && data?.memories) setLocalMemories(data.memories);
-    }
-
-    window.addEventListener(memoryStoreUpdatedEvent, handleMemoryUpdate);
-    loadLocalMemories();
-
-    return () => {
-      cancelled = true;
-      window.removeEventListener(memoryStoreUpdatedEvent, handleMemoryUpdate);
-    };
-  }, []);
+  const localMemories = useLocalMemories();
 
   return useMemo(() => {
     const litCityIds = getLitCityIds(localMemories);
@@ -615,34 +588,7 @@ export function ProvinceProgressBadge({
   provinceId: string;
   total: number;
 }>) {
-  const [localMemories, setLocalMemories] = useState<LocalMemoryStore>({});
-
-  useEffect(() => {
-    let cancelled = false;
-    const handleMemoryUpdate = (event: Event) => {
-      const detail = (event as CustomEvent<LocalMemoryStore>).detail;
-      if (detail) setLocalMemories(detail);
-    };
-
-    async function loadLocalMemories() {
-      const response = await fetch("/api/memories", { cache: "no-store" }).catch(() => null);
-      if (!response?.ok) return;
-
-      const data = (await response.json().catch(() => null)) as
-        | { memories?: LocalMemoryStore }
-        | null;
-
-      if (!cancelled && data?.memories) setLocalMemories(data.memories);
-    }
-
-    window.addEventListener(memoryStoreUpdatedEvent, handleMemoryUpdate);
-    loadLocalMemories();
-
-    return () => {
-      cancelled = true;
-      window.removeEventListener(memoryStoreUpdatedEvent, handleMemoryUpdate);
-    };
-  }, []);
+  const localMemories = useLocalMemories();
 
   const count = useMemo(() => {
     const litCityIds = getLitCityIds(localMemories);

@@ -15,10 +15,7 @@ import { getPrivateDataFilePath } from "@/lib/server/dataDir";
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
-type LoginPhotoText = {
-  city?: string;
-  label?: string;
-};
+import type { LoginPhotoText } from "@/data/loginPhotoSlots";
 
 type LoginPhotoStore = {
   photos: Record<string, string>;
@@ -27,18 +24,9 @@ type LoginPhotoStore = {
 
 const loginPhotoStorePath = getPrivateDataFilePath("loginPhotos.private.json");
 const loginPhotoStoreKey = "login-photos";
-const imageMaxLength = 12_000_000;
 const slotIdPattern = /^[a-z0-9_-]{1,40}$/i;
 
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === "object" && value !== null && !Array.isArray(value);
-
-const isAllowedImage = (value: string) =>
-  value.length <= imageMaxLength &&
-  (value.startsWith("/photos/") ||
-    value.startsWith("/sprites/") ||
-    value.startsWith("https://") ||
-    value.startsWith("data:image/"));
+import { isRecord, isLoginPhotoImage } from "@/lib/server/validation";
 
 function normalizePhotoMap(value: unknown): Record<string, string> {
   if (!isRecord(value)) return {};
@@ -49,7 +37,7 @@ function normalizePhotoMap(value: unknown): Record<string, string> {
         typeof slotId === "string" &&
         slotIdPattern.test(slotId) &&
         typeof image === "string" &&
-        isAllowedImage(image),
+        isLoginPhotoImage(image),
     ),
   ) as Record<string, string>;
 }
@@ -118,7 +106,7 @@ function parseLoginPhotoPayload(
   }
 
   if (typeof image === "string") {
-    if (!isAllowedImage(image)) return null;
+    if (!isLoginPhotoImage(image)) return null;
     return { slotId, image };
   }
 

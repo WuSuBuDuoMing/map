@@ -1,5 +1,7 @@
 import Image from "next/image";
-import ChinaMap, { SouthChinaSeaInset } from "@/components/ChinaMap";
+import ChinaMapData from "@/components/ChinaMapData";
+import { SouthChinaSeaInset } from "@/components/ChinaMap";
+import { getDashLinePath } from "@/lib/geo-server";
 import BackToLoginButton from "@/components/BackToLoginButton";
 import { LegendProgress, ProgressBadge, StatsPanel } from "@/components/HomeProgress";
 import RandomPhotoCard from "@/components/RandomPhotoCard";
@@ -73,6 +75,8 @@ function Legend() {
 }
 
 export default function MapPage() {
+  const dashLinePath = getDashLinePath();
+
   return (
     <main className="relative h-[100dvh] max-h-[100dvh] overflow-hidden bg-[#FAFBF7] text-[#5A6670]">
       <div className="map-mist-band" aria-hidden="true" />
@@ -104,13 +108,13 @@ export default function MapPage() {
           </header>
 
           <div className="flex min-h-0 flex-1 items-center justify-center pb-28 pt-0 sm:pb-20 lg:pb-6">
-            <ChinaMap className="w-[min(100%,1100px)] max-w-[1100px]" width={1100} height={860} />
+            <ChinaMapData className="w-[min(100%,1100px)] max-w-[1100px]" width={1100} height={860} />
           </div>
 
           <RandomPhotoCard />
 
           <div className="absolute bottom-7 left-6 flex flex-col gap-4 sm:left-9">
-            <SouthChinaSeaInset />
+            <SouthChinaSeaInset dashLinePath={dashLinePath ?? undefined} />
             <Legend />
           </div>
         </section>

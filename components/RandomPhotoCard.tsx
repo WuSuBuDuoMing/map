@@ -10,6 +10,7 @@ import {
   type LocalMemoryStore,
 } from "@/data/progress";
 import { LocalPrivacyImage, LocalPrivacyImg } from "@/components/LocalPrivacyImage";
+import { isBrowserImageUrl } from "@/lib/imageUtils";
 
 interface RandomPhoto {
   id: string;
@@ -19,8 +20,6 @@ interface RandomPhoto {
   date: string;
   text: string;
 }
-
-const isBrowserImageUrl = (url: string) => url.startsWith("data:image/") || url.startsWith("https://");
 
 function collectMemories(localMemories: LocalMemoryStore) {
   const localItems = Object.values(localMemories).flat();

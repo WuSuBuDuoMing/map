@@ -29,8 +29,9 @@ import {
   defaultWeatherCityIds,
   maxWeatherCities,
   type AppSettings,
-  type LoginPhotoText,
 } from "@/data/appSettings";
+import type { LoginPhotoText } from "@/data/loginPhotoSlots";
+import { loginPhotoSlots } from "@/data/loginPhotoSlots";
 import {
   deleteLoginPhotoText,
   deleteLoginPhoto,
@@ -41,11 +42,10 @@ import {
   writeLoginPhoto,
 } from "@/data/loginPhotoStore";
 import {
-  adminModeUpdatedEvent,
-  readAdminMode,
   writeAdminMode,
 } from "@/data/adminMode";
 import { LocalPrivacyImage } from "@/components/LocalPrivacyImage";
+import { useAdminMode } from "@/hooks/useAdminMode";
 
 type StoredItem = {
   id: string;
@@ -93,20 +93,6 @@ const configs = {
 } satisfies Record<string, ToolConfig>;
 
 const auxiliaryStorageKeys = ["mapofus:favorites", "mapofus:anniversaries", "mapofus:capsules"] as const;
-const loginPhotoVersion = "placeholder-20260601";
-const loginPhotoFallback = (fileName: string) => `/photos/login/${fileName}.jpg?v=${loginPhotoVersion}`;
-
-const loginPhotoSlots = [
-  { id: "hangzhou", city: "杭州", label: "春日湖畔", fallback: loginPhotoFallback("hangzhou") },
-  { id: "shanghai", city: "上海", label: "外滩傍晚", fallback: loginPhotoFallback("shanghai") },
-  { id: "macau", city: "澳门", label: "旧城花影", fallback: loginPhotoFallback("macau") },
-  { id: "hongkong", city: "香港", label: "夜色亮起", fallback: loginPhotoFallback("hongkong") },
-  { id: "qingdao", city: "青岛", label: "海风经过", fallback: loginPhotoFallback("qingdao") },
-  { id: "zhengzhou", city: "郑州", label: "见面那天", fallback: loginPhotoFallback("zhengzhou") },
-  { id: "zhuhai", city: "珠海", label: "海边散步", fallback: loginPhotoFallback("zhuhai") },
-  { id: "guangzhou", city: "广州", label: "旧街热气", fallback: loginPhotoFallback("guangzhou") },
-  { id: "jinan", city: "济南", label: "泉边小记", fallback: loginPhotoFallback("jinan") },
-] as const;
 
 const readItems = (key: string): StoredItem[] => {
   if (typeof window === "undefined") return [];
@@ -122,26 +108,6 @@ const readItems = (key: string): StoredItem[] => {
 
 const writeItems = (key: string, items: StoredItem[]) => {
   window.localStorage.setItem(key, JSON.stringify(items));
-};
-
-const useAdminMode = () => {
-  const [isAdmin, setIsAdmin] = useState(false);
-
-  useEffect(() => {
-    const timer = window.setTimeout(() => setIsAdmin(readAdminMode()), 0);
-    const handleAdminMode = (event: Event) => {
-      setIsAdmin(Boolean((event as CustomEvent<boolean>).detail));
-    };
-
-    window.addEventListener(adminModeUpdatedEvent, handleAdminMode);
-
-    return () => {
-      window.clearTimeout(timer);
-      window.removeEventListener(adminModeUpdatedEvent, handleAdminMode);
-    };
-  }, []);
-
-  return isAdmin;
 };
 
 const readJsonArray = (key: string) => {

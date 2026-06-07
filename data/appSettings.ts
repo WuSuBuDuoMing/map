@@ -1,6 +1,9 @@
 export const appSettingsStorageKey = "mapofus:settings";
 export const appSettingsUpdatedEvent = "mapofus:settings-updated";
 
+export type { LoginPhotoText } from "@/data/loginPhotoSlots";
+import type { LoginPhotoText } from "@/data/loginPhotoSlots";
+
 export type AppSettings = {
   loginPhotos?: Record<string, string>;
   loginPhotoTexts?: Record<string, LoginPhotoText>;
@@ -8,11 +11,6 @@ export type AppSettings = {
   anniversaryLabel?: string;
   weatherCityIds?: string[];
   coupleLogo?: string;
-};
-
-export type LoginPhotoText = {
-  city?: string;
-  label?: string;
 };
 
 // Neutral defaults so a fresh copy never shows the original author's personal

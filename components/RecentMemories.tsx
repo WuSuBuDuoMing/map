@@ -10,8 +10,8 @@ import {
 } from "@/data/progress";
 import { memories, type Memory } from "@/data/memories";
 import { LocalPrivacyImage, LocalPrivacyImg } from "@/components/LocalPrivacyImage";
+import { isBrowserImageUrl } from "@/lib/imageUtils";
 
-const isBrowserImageUrl = (url: string) => url.startsWith("data:image/") || url.startsWith("https://");
 const randomMemoryCount = 3;
 
 function pickRandomMemories(items: Memory[]) {

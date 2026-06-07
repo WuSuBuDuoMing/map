@@ -13,10 +13,21 @@
     "preview": "next start",
     "start": "next start",
     "lint": "eslint",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
     "desktop": "electron electron/main.js",
     "dist:dir": "npm run desktop:prepare && electron-builder --dir",
     "dist:mac": "npm run desktop:prepare && electron-builder --mac dmg",
-    "dist:win": "npm run desktop:prepare && electron-builder --win nsis --x64"
+    "dist:win": "npm run desktop:prepare && electron-builder --win nsis --x64",
+    "perf:source": "node scripts/perf-source-metrics.mjs",
+    "perf:css": "node scripts/perf-css-metrics.mjs",
+    "perf:bundle": "node scripts/perf-bundle-analyze.mjs",
+    "perf:api": "node scripts/perf-api-benchmark.mjs",
+    "perf:storage": "node scripts/perf-storage-benchmark.mjs",
+    "perf:electron": "node scripts/perf-electron-startup.mjs",
+    "perf:baseline": "node scripts/perf-source-metrics.mjs && node scripts/perf-css-metrics.mjs && node scripts/perf-api-benchmark.mjs && node scripts/perf-storage-benchmark.mjs",
+    "perf:diff": "node scripts/perf-diff-report.mjs"
   },
   "main": "electron/main.js",
   "build": {
@@ -69,11 +80,13 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@vitest/coverage-v8": "^4.1.8",
     "electron": "^42.3.0",
     "electron-builder": "^26.8.1",
     "eslint": "^9",
     "eslint-config-next": "16.2.6",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^4.1.8"
   }
 }

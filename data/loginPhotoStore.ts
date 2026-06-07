@@ -1,9 +1,7 @@
 export const loginPhotosUpdatedEvent = "mapofus:login-photos-updated";
 
-export type LoginPhotoText = {
-  city?: string;
-  label?: string;
-};
+export type { LoginPhotoText } from "@/data/loginPhotoSlots";
+import type { LoginPhotoText } from "@/data/loginPhotoSlots";
 
 type LoginPhotoServerStore = {
   photos: Record<string, string>;

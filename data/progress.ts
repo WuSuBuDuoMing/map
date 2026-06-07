@@ -1,4 +1,5 @@
 import { cities } from "@/data/cities";
+import { cityIndex } from "@/data/cities-index";
 import type { Memory } from "@/data/memories";
 import { provinces } from "@/data/provinces";
 
@@ -15,7 +16,7 @@ export const getLitCityIds = (localMemories: LocalMemoryStore = {}) =>
 
 export const getLitProvinceIds = (litCityIds: Set<string>) =>
   new Set(
-    cities
+    cityIndex
       .filter((city) => litCityIds.has(city.id))
       .map((city) => city.provinceId),
   );
