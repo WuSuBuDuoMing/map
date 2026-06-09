@@ -1,391 +1,239 @@
 # Map of Us
 
-> 一个本地优先的情侣记忆地图桌面应用 -- 用地图标记你们一起走过的每一个城市。
+> A local-first couple's memory map desktop app -- mark every city you have visited together on an interactive map.
+
+[English](./README.md) | [中文](./README.zh-CN.md)
 
 [![Next.js](https://img.shields.io/badge/Next.js-16-black)](https://nextjs.org)
 [![React](https://img.shields.io/badge/React-19-61dafb)](https://react.dev)
 [![Electron](https://img.shields.io/badge/Electron-42-47848f)](https://www.electronjs.org)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4-38bdf8)](https://tailwindcss.com)
+[![Vitest](https://img.shields.io/badge/Vitest-Coverage-6e9b1f)](https://vitest.dev)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![GitHub](https://img.shields.io/badge/GitHub-WuSuBuDuoMing%2Fmap-blue)](https://github.com/WuSuBuDuoMing/map)
 
-## 为什么需要这个
+## Why Map of Us?
 
-市面上的地图应用只能标记位置，却无法承载回忆。Map of Us 把中国地图变成你们的私人记忆画布 -- 每个去过的地方都可以添加照片、文字和日期。数据全部保存在你自己的设备上，不需要联网，不需要注册账号。
+Map applications let you drop pins, but they cannot hold your memories. **Map of Us** transforms an interactive China SVG map (34 provinces) into a personal memory canvas -- every visited province lights up, and every city can hold photos, text, and dates. All data is stored locally on your device: no accounts, no internet required.
 
-## 功能特性
+## Features
 
-- **密码保护** -- 站点密码 + 管理员密码双层认证，Cookie HMAC 签名
-- **中国地图** -- 34 省份 SVG 地图，已去过省份自动点亮，支持缩放和平移
-- **省份详情** -- 点击省份进入详情页，查看该省所有城市和回忆
-- **城市回忆** -- 每个城市可添加多条回忆，支持多图封面、编辑和删除
-- **设置管理** -- 纪念日、沿途天气城市、情侣 Logo、登录页九宫格照片
-- **完整备份** -- 导出 / 导入完整备份文件，一键恢复所有数据
-- **桌面应用** -- Electron 打包，数据写入 `userData` 目录，安装包只读
-- **Web 部署** -- 同一套代码可部署到服务器（需配置 Supabase）
+- **Password Protection** -- Dual-layer authentication (site password + admin password) with HMAC-SHA256 signed cookies and rate limiting
+- **Interactive China Map** -- 34-province SVG map with zoom, pan, and D3-geo projection; visited provinces automatically light up
+- **Province Detail Pages** -- Tap a province to see all its cities and memories
+- **City Memories** -- Add multiple memories per city with multi-photo covers, editing, and deletion
+- **Settings Management** -- Anniversaries with countdown, en-route weather for up to 3 cities, couple logo, login page 3x3 grid photos
+- **Full Backup & Restore** -- Export/import a single backup file to restore all data (memories, landmarks, photos, settings)
+- **Desktop App** -- Electron 42 packaging; data written to the OS `userData` directory, installer is read-only
+- **Web Deployment** -- The same codebase deploys to a server with Supabase for storage
 
-## 技术栈
+## Tech Stack
 
-- **框架**: Next.js 16 App Router (RSC)
-- **UI**: React 19 + Tailwind CSS 4 + Framer Motion
-- **地图**: D3-geo 投影 + 自定义 SVG 渲染
-- **桌面**: Electron 42 + Next.js standalone
-- **存储**: 本地 JSON 文件 (桌面) / Supabase (Web)
-- **认证**: HMAC-SHA256 Cookie 签名 + 速率限制
-- **测试**: Vitest + V8 Coverage
+| Layer | Technology |
+|-------|------------|
+| Framework | Next.js 16 App Router (RSC) |
+| UI | React 19, Tailwind CSS 4, Framer Motion |
+| Map Engine | D3-geo projection + custom SVG rendering |
+| Desktop Shell | Electron 42 + Next.js standalone output |
+| Storage | Local JSON files (desktop) / Supabase (web) |
+| Auth | HMAC-SHA256 cookie signing + rate limiting |
+| Testing | Vitest + V8 Coverage (24+ test cases) |
+| CI/CD | GitHub Actions (lint, type-check, test, build on push; release artifacts on `v*` tags) |
 
-## 快速开始
+## Quick Start
 
-### 前置条件
+### Prerequisites
 
 - Node.js 18+
 - npm 9+
 
-### Web 开发模式
+### Web Development Mode
 
 ```bash
-# 克隆仓库
-git clone https://github.com/yourname/map-of-us.git
-cd map-of-us
+# Clone the repository
+git clone https://github.com/WuSuBuDuoMing/map.git
+cd map
 
-# 安装依赖
+# Install dependencies
 npm install
 
-# 复制环境变量（可选，本地开发可跳过）
+# Copy environment variables (optional for local dev)
 cp .env.example .env.local
 
-# 启动开发服务器
+# Start the development server
 npm run dev
 ```
 
-浏览器打开 `http://localhost:3002`，输入站点密码即可进入。
+Open `http://localhost:3002` in your browser and enter the site password to get started.
 
-### Electron 桌面模式
+### Electron Desktop Mode
 
 ```bash
-# 启动桌面开发模式（会同时启动 Next.js dev server 和 Electron 窗口）
+# Start desktop dev mode (launches Next.js dev server + Electron window)
 npm run desktop
 ```
 
-### 初始密码
+### Default Passwords
 
-首次安装的默认密码：
+The default passwords for a fresh installation:
 
 ```text
-进入密码：1234
-管理员密码：admin1234
+Site Password:    1234
+Admin Password:   admin1234
 ```
 
-进入后请尽快在 **设置 -> 密码设置** 中修改（需先用管理员密码开启管理员模式）。
+After logging in, change them immediately under **Settings > Password Settings** (admin mode must be enabled with the admin password first).
 
-技术说明：桌面版首次启动时会在 `userData` 目录创建 `auth.local.json`，保存密码和随机生成的 `AUTH_COOKIE_SECRET`。若显式设置了环境变量，环境变量优先。
+**Technical note:** On desktop, the first launch creates `auth.local.json` inside the `userData` directory, storing passwords and a randomly generated `AUTH_COOKIE_SECRET`. Explicitly set environment variables always take precedence.
 
-## 安装与首次打开（给使用者）
+## Installation & First Launch (End Users)
 
-本应用未做苹果付费签名和公证，首次打开需要手动放行，**只需做一次**。
+This app is not code-signed or notarized on macOS. You need to manually allow it to run on the first launch -- this is a one-time step.
 
 ### macOS
 
-1. 双击 `.dmg` 文件，将 **Map of Us** 拖进「应用程序」
-2. **右键 -> 打开**，弹窗中再次点击 **打开**
-3. 若没有「打开」选项：**系统设置 -> 隐私与安全性**，找到 Map of Us 提示，点 **仍要打开**
-4. 若提示「已损坏」：终端运行 `xattr -cr "/Applications/Map of Us.app"`
+1. Double-click the `.dmg` file and drag **Map of Us** into Applications
+2. **Right-click > Open**, then click **Open** in the dialog
+3. If there is no Open option: go to **System Settings > Privacy & Security**, find the Map of Us prompt, and click **Open Anyway**
+4. If you see "App is damaged": run `xattr -cr "/Applications/Map of Us.app"` in Terminal
 
 ### Windows
 
-1. 运行 `-Setup.exe` 安装
-2. 若出现 SmartScreen 提示：点 **更多信息 -> 仍要运行**
+1. Run the `-Setup.exe` installer
+2. If a SmartScreen warning appears: click **More info > Run anyway**
 
-## 开发指南
-
-### 项目结构
+## Project Structure
 
 ```text
-app/                        App Router 页面和 API
+app/                        App Router pages and API routes
   api/
-    auth/login/             登录/登出 API
-    auth/password/          修改密码 API
-    memories/               回忆 CRUD API
-    city-assets/            城市地标图 API
-    login-photos/           登录页照片 API
-  map/                      主地图页
-  province/[id]/            省份详情页
-  settings/                 设置页
-  anniversaries/            纪念日页
-  favorites/                收藏页
-  time-capsule/             时光宝盒页
-  demo/                     演示体验页
+    auth/login/             Login / logout API
+    auth/password/          Password change API
+    memories/               Memory CRUD API
+    city-assets/            City landmark images API
+    login-photos/           Login page photos API
+  map/                      Main map page
+  province/[id]/            Province detail page
+  settings/                 Settings page
+  anniversaries/            Anniversaries page
+  favorites/                Favorites page
+  time-capsule/             Time capsule page
+  demo/                     Demo experience page
 
-components/                 UI 组件
-  ChinaMap.tsx              中国地图（SVG + 缩放）
-  ChinaMapData.tsx          中国地图 SSR 包装（RSC 中调用 geo-server）
-  HomeProgress.tsx          首页进度组件（重导出 home-progress/ 子模块）
-  ProvinceMap.tsx           省份详情地图（旧入口，重导出到子目录）
-  MemoryTools.tsx           设置页入口（重导出到子目录）
-  MemoryNav.tsx             导航栏壳
-  EntryExperience.tsx       入口引导页
-  MemoryArchive.tsx         回忆归档页
-  RandomPhotoCard.tsx       随机照片卡片
-  RecentMemories.tsx        最近回忆列表
-  LocalPrivacyImage.tsx     隐私模式图像占位
-  BackToLoginButton.tsx     返回登录按钮
-  province-map/             省份地图子模块
-    ProvinceMap.tsx           省份详情页核心组件
-    markerLayouts.ts          城市标记布局配置
-    imageCompression.ts       图片压缩工具
-    utils.ts                  共享常量和辅助函数
-    index.ts                  统一导出
-  home-progress/            首页进度子模块
-    WeatherCard.tsx           天气卡片组件
-    StatsCards.tsx            统计卡片（纪念日倒计时、在一起天数、相册进度、Logo）
-    index.ts                  统一导出
-  settings/                 设置页子模块
-    SettingsPage.tsx          设置页主组件
-    PasswordSection.tsx       密码管理区域
-    BackupSection.tsx         备份导入导出区域
-    LoginPhotoSection.tsx     登录页照片管理区域
-    shared.ts                 设置页共享类型和工具函数
-    index.ts                  统一导出
+components/                 UI components
+  ChinaMap.tsx              China map (SVG + zoom/pan)
+  ChinaMapData.tsx          China map SSR wrapper (RSC calls geo-server)
+  HomeProgress.tsx          Home progress component (re-exports home-progress/ submodule)
+  ProvinceMap.tsx           Province detail map (legacy entry, re-exports to subdirectory)
+  MemoryTools.tsx           Settings page entry (re-exports to subdirectory)
+  MemoryNav.tsx             Navigation bar shell
+  EntryExperience.tsx       Onboarding / entry experience
+  MemoryArchive.tsx         Memory archive page
+  RandomPhotoCard.tsx       Random photo card
+  RecentMemories.tsx        Recent memories list
+  LocalPrivacyImage.tsx     Privacy-mode image placeholder
+  BackToLoginButton.tsx     Back-to-login button
+  province-map/             Province map submodule
+    ProvinceMap.tsx           Province detail page core component
+    markerLayouts.ts          City marker layout configuration
+    imageCompression.ts       Image compression utilities
+    utils.ts                  Shared constants and helpers
+    index.ts                  Barrel export
+  home-progress/            Home progress submodule
+    WeatherCard.tsx           Weather card component
+    StatsCards.tsx            Stats cards (anniversary countdown, days together, photo progress, logo)
+    index.ts                  Barrel export
+  settings/                 Settings page submodule
+    SettingsPage.tsx          Settings page main component
+    PasswordSection.tsx       Password management section
+    BackupSection.tsx         Backup import/export section
+    LoginPhotoSection.tsx     Login page photo management section
+    shared.ts                 Shared types and utility functions
+    index.ts                  Barrel export
 
-data/                       数据定义和浏览器侧工具
-  provinces.ts              34 省份定义
-  cities.ts                 城市数据（含地标、坐标）
-  cities-index.ts           城市轻量索引（id、省份、中英文名）
-  memories.ts               Memory 类型定义
-  memoryUtils.ts            回忆合并去重工具（种子 + 本地数据）
-  progress.ts               已去城市/省份计算 + LocalMemoryStore 类型
-  appSettings.ts            应用设置读写
-  adminMode.ts              管理员模式状态
-  loginPhotoStore.ts        登录页照片客户端存储
-  loginPhotoSlots.ts        登录页照片九宫格槽位定义
-  provinceCityPlaces.ts     省份城市索引
+data/                       Data definitions and client-side utilities
+  provinces.ts              34 province definitions
+  cities.ts                 City data (landmarks, coordinates)
+  cities-index.ts           Lightweight city index (id, province, name in CN/EN)
+  memories.ts               Memory type definitions
+  memoryUtils.ts            Memory merge & dedup utilities (seed + local data)
+  progress.ts               Visited city/province calculation + LocalMemoryStore type
+  appSettings.ts            App settings read/write
+  adminMode.ts              Admin mode state
+  loginPhotoStore.ts        Login page photo client-side storage
+  loginPhotoSlots.ts        Login page 3x3 grid slot definitions
+  provinceCityPlaces.ts     Province-city index
 
-hooks/                      自定义 React Hook
-  useLocalMemories.ts       记忆数据获取 + useSyncExternalStore 同步
-  useAdminMode.ts           管理员模式状态 Hook
+hooks/                      Custom React Hooks
+  useLocalMemories.ts       Memory data fetching + useSyncExternalStore sync
+  useAdminMode.ts           Admin mode state hook
 
-lib/                        核心库
-  geo.ts                    D3 地理投影和路径计算（客户端）
-  geo-server.ts             D3 地理投影服务端计算（SSR 组件使用）
-  mapColors.ts              地图共享色板
-  imageUtils.ts             图片 URL 类型判断
-  typeGuards.ts             共享类型守卫（isRecord）
-  dateUtils.ts              日期规范化工具
-  localPrivacy.ts           隐私模式图像替换
+lib/                        Core libraries
+  geo.ts                    D3 geographic projection and path calculation (client)
+  geo-server.ts             D3 geographic projection server-side calculation (SSR)
+  mapColors.ts              Map shared color palette
+  imageUtils.ts             Image URL type detection
+  typeGuards.ts             Shared type guards (isRecord)
+  dateUtils.ts              Date normalization utilities
+  localPrivacy.ts           Privacy-mode image replacement
   server/
-    auth.ts                 HMAC Cookie 认证
-    supabase.ts             Supabase 客户端 + 读写
-    dataDir.ts              数据目录路径解析
-    createJsonStore.ts      原子写入 JSON 文件存储（互斥锁 + COW 备份）
-    shutdown.ts             进程退出 Hook 注册中心
-    validation.ts           请求校验工具（图片校验、CSRF、Content-Length）
+    auth.ts                 HMAC Cookie authentication
+    supabase.ts             Supabase client + read/write
+    dataDir.ts              Data directory path resolution
+    createJsonStore.ts      Atomic JSON file store (mutex lock + COW backup)
+    shutdown.ts             Process exit hook registry
+    validation.ts           Request validation (image check, CSRF, Content-Length)
 
-electron/                   Electron 主进程
-  main.js                   窗口管理、Next.js 服务启动、认证配置
+electron/                   Electron main process
+  main.js                   Window management, Next.js server startup, auth config
 
-scripts/                    构建脚本
-  prepare-standalone.mjs    准备 standalone 产物
-  dev-keepalive.sh          开发服务器保活
-  start-dev-daemon.sh       开发守护进程
+scripts/                    Build scripts
+  prepare-standalone.mjs    Prepare standalone output
+  dev-keepalive.sh          Dev server keep-alive
+  start-dev-daemon.sh       Dev daemon process
 
-__tests__/                  Vitest 测试套件
-  api/                      API 端点测试
-  lib/server/               服务端模块测试（auth、createJsonStore、shutdown、validation）
-  data/                     数据模块测试（progress）
-  helpers/                  测试工具（请求构造、数据工厂）
-  setup.ts                  全局测试配置
+__tests__/                  Vitest test suite
+  api/                      API endpoint tests
+  lib/server/               Server module tests (auth, createJsonStore, shutdown, validation)
+  data/                     Data module tests (progress)
+  helpers/                  Test utilities (request builders, data factories)
+  setup.ts                  Global test configuration
 ```
 
-### 共享模块说明
-
-- **`data/provinces.ts`** -- 34 省份 ID、adcode、中英文名、是否已点亮
-- **`data/cities.ts`** -- 城市数据：坐标、省份归属、地标、精灵图
-- **`data/cities-index.ts`** -- 城市轻量索引（id、省份、中英文名），用于 progress 计算
-- **`data/memories.ts`** -- `Memory` 接口定义和时间排序工具
-- **`data/memoryUtils.ts`** -- 种子回忆和本地回忆的合并去重（`collectMemories`）
-- **`data/progress.ts`** -- 根据回忆数据计算已去城市和已去省份，导出 `LocalMemoryStore` 类型
-- **`data/appSettings.ts`** -- 应用设置的 localStorage 读写和校验
-- **`data/adminMode.ts`** -- 管理员模式的 sessionStorage 读写
-- **`data/loginPhotoStore.ts`** -- 登录页照片的 API 读写 + 旧版迁移
-- **`data/loginPhotoSlots.ts`** -- 登录页照片九宫格槽位定义
-- **`data/provinceCityPlaces.ts`** -- 省份-城市索引，用于省份详情页
-- **`hooks/useLocalMemories.ts`** -- 记忆数据单次获取 + `useSyncExternalStore` 全局同步
-- **`hooks/useAdminMode.ts`** -- 管理员模式状态 Hook，监听 CustomEvent 自动更新
-- **`lib/geo.ts`** -- GeoJSON 加载、D3 投影、路径生成（客户端）
-- **`lib/geo-server.ts`** -- D3 投影服务端计算，SSR 时预计算地图路径
-- **`lib/mapColors.ts`** -- 地图共享色板（中国地图和省份地图共用）
-- **`lib/imageUtils.ts`** -- 图片 URL 类型判断（data URL vs https URL）
-- **`lib/typeGuards.ts`** -- `isRecord` 类型守卫，客户端/服务端共用
-- **`lib/dateUtils.ts`** -- 日期字符串规范化（`YYYY.M.D` -> `YYYY.MM.DD`）
-- **`lib/server/auth.ts`** -- HMAC-SHA256 Cookie 签名和验证
-- **`lib/server/createJsonStore.ts`** -- 原子写入 JSON 存储（互斥锁、COW 备份、崩溃恢复）
-- **`lib/server/shutdown.ts`** -- 进程退出 Hook 注册中心，Electron 退出前排空
-- **`lib/server/validation.ts`** -- 请求校验工具（图片 URL 校验、CSRF 防护、Content-Length 检查）
-
-### 数据存储架构
-
-应用采用双模式存储，根据环境自动切换：
-
-```text
-请求 -> API Route -> 判断存储模式
-                      |
-                      +-> MAP_OF_US_STORAGE_MODE=local  -> 本地 JSON 文件
-                      |
-                      +-> Supabase 已配置                 -> Supabase DB + Storage
-```
-
-本地文件存储路径：
-
-```text
-开发模式：  data/localMemories.private.json
-桌面打包：  [userData]/data/localMemories.private.json
-```
-
-### 认证流程
-
-```text
-用户输入密码
-    |
-    v
-POST /api/auth/login
-    |
-    +-> verifyPassword() -- timing-safe 比较
-    +-> setAuthCookies() -- HMAC-SHA256 签名 Cookie
-    |
-    v
-后续请求携带 Cookie
-    |
-    +-> getAuthRole() -- 验证签名和过期时间
-    +-> requireSiteSession() / requireAdminSession()
-```
-
-## 测试指南
-
-```bash
-# 运行全部测试
-npm test
-
-# 监听模式（文件变更自动重跑）
-npm run test:watch
-
-# 运行测试并生成覆盖率报告
-npm run test:coverage
-```
-
-测试套件覆盖：
-
-- 认证 API：登录、登出、密码修改
-- 回忆 API：完整 CRUD 生命周期 + 输入校验
-- 城市地标 API：读写删除 + 权限检查
-- 登录照片 API：照片和文字管理 + 迁移逻辑
-- 服务端模块：`createJsonStore` 原子写入、`shutdown` Hook 排空、`validation` 校验、`auth` 认证逻辑
-- 数据模块：`progress` 已去城市/省份计算
-
-测试使用独立的临时目录，不会影响项目数据文件。所有测试强制使用本地文件存储模式，不连接 Supabase。
-
-> **Windows 注意事项**：Vitest 在包含非 ASCII 字符（如中文）的路径下可能无法正常运行。如果 `npm test` 报错，建议将项目移到纯 ASCII 路径（如 `C:\dev\map-of-us`），或在项目根目录下直接运行（当前工作目录已正确配置）。测试超时默认 10 秒（`vitest.config.ts` 中的 `testTimeout`），适用于 Windows 文件系统。
-
-## 环境变量
-
-- **`SITE_PASSWORD`** -- 站点进入密码（桌面版可选，默认 `1234`）
-- **`ADMIN_PASSWORD`** -- 管理员密码（桌面版可选，默认 `admin1234`）
-- **`AUTH_COOKIE_SECRET`** -- Cookie 签名密钥（桌面版可选，自动生成）
-- **`SUPABASE_URL`** -- Supabase 项目 URL（Web 部署必填）
-- **`SUPABASE_SERVICE_ROLE_KEY`** -- Supabase Service Role Key（Web 部署必填）
-- **`SUPABASE_STORAGE_BUCKET`** -- Supabase Storage Bucket 名称，默认 `map-of-us`
-- **`MAP_OF_US_STORAGE_MODE`** -- 设为 `local` 强制使用本地文件存储
-- **`MAP_OF_US_DATA_DIR`** -- 自定义数据文件目录
-- **`MAP_OF_US_DESKTOP`** -- 设为 `1` 标识 Electron 桌面环境
-
-桌面版的认证环境变量自动从 `auth.local.json` 读取，无需手动配置 `.env.local`。
-
-## 部署指南
-
-### Web 部署
-
-1. 配置 Supabase：在 Supabase SQL Editor 中运行 `docs/supabase-schema.sql`
-2. 配置环境变量：填写 `.env.local` 中的 `SUPABASE_URL` 和 `SUPABASE_SERVICE_ROLE_KEY`
-3. 构建和启动：
-
-```bash
-npm run build
-npm start
-```
-
-### 桌面打包
-
-```bash
-# 1. 生成 Next.js standalone 产物
-npm run desktop:prepare
-
-# 2. 生成安装包
-npm run dist:mac    # macOS DMG
-npm run dist:win    # Windows NSIS 安装包
-
-# 快速验证（不打包 DMG/EXE）
-npm run dist:dir
-```
-
-产物输出到 `dist/` 目录。在 macOS 上可交叉编译 Windows 安装包，但最终发布前建议在目标平台验证。
-
-当前打包未配置正式应用图标和开发者签名，公开分发前需要配置证书和公证。
-
-## 数据保存位置
-
-- **浏览器开发**: `data/localMemories.private.json` 等
-- **桌面打包 (macOS)**: `~/Library/Application Support/Map of Us/data`
-- **桌面打包 (Windows)**: `%APPDATA%/Map of Us/data`
-
-## 备份与迁移
-
-1. 进入设置页，用管理员密码开启管理员模式
-2. 点击「导出备份」保存完整备份文件
-3. 换电脑或重装后，在设置页「导入备份」恢复
-
-导入会恢复：回忆、城市地标、登录照片、纪念日、天气城市、Logo 等全部数据。
-
-## 可自定义内容
-
-在设置页开启管理员模式后可自定义：
-
-- 纪念日名称和日期
-- 首页「沿途天气」城市（最多 3 个）
-- 右下角情侣 Logo
-- 登录页九宫格照片及文案
-- 城市地标图
-
-## 架构概览
+## Architecture Overview
 
 ```text
                     +------------------+
-                    |   Electron 壳    |
-                    |  (main.js)       |
+                    |  Electron Shell  |
+                    |    (main.js)     |
                     +--------+---------+
                              |
                     +--------v---------+
                     |  Next.js Server  |
-                    |  (standalone)    |
+                    |   (standalone)   |
                     +--------+---------+
                              |
               +--------------+--------------+
               |                             |
      +--------v--------+          +--------v--------+
      |   App Router    |          |   API Routes    |
-     |  (RSC Pages)    |          |  (REST API)     |
+     |   (RSC Pages)   |          |   (REST API)    |
      +--------+--------+          +--------+--------+
               |                             |
      +--------v--------+          +--------v--------+
-     |  React 组件     |          |  认证中间件      |
-     |  ChinaMap        |          |  速率限制        |
-     |  ProvinceMap     |          |  输入校验        |
+     |  React Components|          |  Auth Middleware|
+     |  ChinaMap        |          |  Rate Limiting  |
+     |  ProvinceMap     |          |  Input Validation|
      |  MemoryTools     |          +--------+--------+
      +--------+--------+                    |
               |                    +--------v--------+
-     +--------v--------+          |  存储层          |
+     +--------v--------+          |  Storage Layer   |
      |  hooks/          |          |  createJsonStore |
-     |  useLocalMemories|          |  (原子写入+互斥锁)|
+     |  useLocalMemories|          |  (atomic + mutex)|
      |  useAdminMode    |          +--------+--------+
      +--------+--------+                    |
               |                    +--------v--------+
-     +--------v--------+          |  本地 JSON 文件 / |
+     +--------v--------+          |  Local JSON /    |
      |  data/           |          |  Supabase DB     |
      |  progress        |          +-----------------+
      |  memoryUtils     |
@@ -400,24 +248,186 @@ npm run dist:dir
      +------------------+
 ```
 
-## CI/CD
+## Data Storage Architecture
 
-项目使用 GitHub Actions 实现持续集成和发布自动化。
+The app uses a dual-mode storage system that switches automatically based on the environment:
 
-**每次 push / PR 到 main 分支时**，CI 流水线自动执行：
+```text
+Request -> API Route -> Determine Storage Mode
+                        |
+                        +-> MAP_OF_US_STORAGE_MODE=local  -> Local JSON files
+                        |
+                        +-> Supabase configured           -> Supabase DB + Storage
+```
+
+Local file storage paths:
+
+```text
+Development:     data/localMemories.private.json
+Desktop (packaged): [userData]/data/localMemories.private.json
+```
+
+## Authentication Flow
+
+```text
+User enters password
+    |
+    v
+POST /api/auth/login
+    |
+    +-> verifyPassword() -- timing-safe comparison
+    +-> setAuthCookies() -- HMAC-SHA256 signed cookies
+    |
+    v
+Subsequent requests carry cookies
+    |
+    +-> getAuthRole() -- verify signature and expiration
+    +-> requireSiteSession() / requireAdminSession()
+```
+
+## Shared Module Reference
+
+- **`data/provinces.ts`** -- 34 province IDs, adcodes, Chinese/English names, visited state
+- **`data/cities.ts`** -- City data: coordinates, province membership, landmarks, sprites
+- **`data/cities-index.ts`** -- Lightweight city index (id, province, name in CN/EN) for progress calculation
+- **`data/memories.ts`** -- `Memory` interface and chronological sorting utilities
+- **`data/memoryUtils.ts`** -- Seed memory and local memory merge/dedup (`collectMemories`)
+- **`data/progress.ts`** -- Computes visited cities and provinces from memory data; exports `LocalMemoryStore` type
+- **`data/appSettings.ts`** -- App settings localStorage read/write and validation
+- **`data/adminMode.ts`** -- Admin mode sessionStorage read/write
+- **`data/loginPhotoStore.ts`** -- Login page photo API read/write + legacy migration
+- **`data/loginPhotoSlots.ts`** -- Login page 3x3 grid slot definitions
+- **`data/provinceCityPlaces.ts`** -- Province-city index for province detail pages
+- **`hooks/useLocalMemories.ts`** -- Single-fetch memory data + `useSyncExternalStore` global sync
+- **`hooks/useAdminMode.ts`** -- Admin mode state hook, listens to CustomEvent for auto-update
+- **`lib/geo.ts`** -- GeoJSON loading, D3 projection, path generation (client)
+- **`lib/geo-server.ts`** -- D3 projection server-side computation for SSR pre-computed map paths
+- **`lib/mapColors.ts`** -- Shared map color palette (used by both China map and province map)
+- **`lib/imageUtils.ts`** -- Image URL type detection (data URL vs https URL)
+- **`lib/typeGuards.ts`** -- `isRecord` type guard, shared between client and server
+- **`lib/dateUtils.ts`** -- Date string normalization (`YYYY.M.D` -> `YYYY.MM.DD`)
+- **`lib/server/auth.ts`** -- HMAC-SHA256 cookie signing and verification
+- **`lib/server/createJsonStore.ts`** -- Atomic JSON store (mutex lock, COW backup, crash recovery)
+- **`lib/server/shutdown.ts`** -- Process exit hook registry, flushed before Electron quits
+- **`lib/server/validation.ts`** -- Request validation (image URL check, CSRF protection, Content-Length)
+
+## Testing Guide
+
+```bash
+# Run all tests
+npm test
+
+# Watch mode (re-runs on file changes)
+npm run test:watch
+
+# Run tests with coverage report
+npm run test:coverage
+```
+
+Test suite coverage:
+
+- **Auth API** -- Login, logout, password change
+- **Memories API** -- Full CRUD lifecycle + input validation
+- **City Assets API** -- Read/write/delete + permission checks
+- **Login Photos API** -- Photo and text management + migration logic
+- **Server Modules** -- `createJsonStore` atomic writes, `shutdown` hook flushing, `validation` checks, `auth` logic
+- **Data Modules** -- `progress` visited city/province calculation
+
+Tests use isolated temporary directories and never touch project data files. All tests force local file storage mode and do not connect to Supabase.
+
+> **Windows Note:** Vitest may not work correctly on paths containing non-ASCII characters (e.g., CJK). If `npm test` fails, move the project to a pure ASCII path (e.g., `C:\dev\map-of-us`) or run from the project root directory (the working directory is already configured). Test timeout defaults to 10 seconds (`testTimeout` in `vitest.config.ts`), suitable for the Windows filesystem.
+
+## Environment Variables
+
+| Variable | Description | Required |
+|----------|-------------|----------|
+| `SITE_PASSWORD` | Site entry password | No (default: `1234`) |
+| `ADMIN_PASSWORD` | Admin password | No (default: `admin1234`) |
+| `AUTH_COOKIE_SECRET` | Cookie signing secret | No (auto-generated on desktop) |
+| `SUPABASE_URL` | Supabase project URL | Yes (web deployment) |
+| `SUPABASE_SERVICE_ROLE_KEY` | Supabase Service Role Key | Yes (web deployment) |
+| `SUPABASE_STORAGE_BUCKET` | Supabase Storage bucket name | No (default: `map-of-us`) |
+| `MAP_OF_US_STORAGE_MODE` | Set to `local` to force local file storage | No |
+| `MAP_OF_US_DATA_DIR` | Custom data file directory | No |
+| `MAP_OF_US_DESKTOP` | Set to `1` to identify Electron desktop environment | No |
+
+Desktop auth environment variables are read automatically from `auth.local.json` -- no manual `.env.local` configuration needed.
+
+## Deployment Guide
+
+### Web Deployment
+
+1. **Configure Supabase:** Run `docs/supabase-schema.sql` in the Supabase SQL Editor
+2. **Set environment variables:** Fill in `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` in `.env.local`
+3. **Build and start:**
+
+```bash
+npm run build
+npm start
+```
+
+### Desktop Packaging
+
+```bash
+# 1. Generate Next.js standalone output
+npm run desktop:prepare
+
+# 2. Build installers
+npm run dist:mac    # macOS DMG
+npm run dist:win    # Windows NSIS installer
+
+# Quick verification (no DMG/EXE packaging)
+npm run dist:dir
+```
+
+Output artifacts are placed in the `dist/` directory. Cross-compilation (building Windows installers on macOS) is possible, but it is recommended to verify on the target platform before publishing.
+
+Currently, the packaging does not include a production application icon or developer signing. Certificates and notarization are required before public distribution.
+
+### CI/CD
+
+The project uses GitHub Actions for continuous integration and release automation.
+
+**On every push / PR to `main`:**
 
 ```text
 checkout -> Node 20 -> npm ci -> tsc --noEmit -> lint -> test -> build
 ```
 
-**推送 `v*` tag 时**，Release 流水线自动构建 macOS 和 Windows 安装包，并创建 GitHub Release（draft）。
+**On pushing a `v*` tag:** The release workflow builds macOS and Windows installers and creates a GitHub Release (draft).
 
 ```bash
-# 触发发布
+# Trigger a release
 git tag v0.2.0
 git push origin v0.2.0
 ```
 
-## 许可证
+## Data Storage Locations
 
-MIT
+| Environment | Path |
+|-------------|------|
+| Browser (dev) | `data/localMemories.private.json` (project root) |
+| Desktop (macOS) | `~/Library/Application Support/Map of Us/data` |
+| Desktop (Windows) | `%APPDATA%/Map of Us/data` |
+
+## Backup & Restore
+
+1. Go to Settings and enable admin mode with the admin password
+2. Click **Export Backup** to save a complete backup file
+3. On a new device or after reinstalling, click **Import Backup** in Settings to restore
+
+Import restores all data: memories, city landmarks, login photos, anniversaries, weather cities, logo, and more.
+
+## Customization
+
+With admin mode enabled in Settings, you can customize:
+
+- Anniversary names and dates
+- Home page "en-route weather" cities (up to 3)
+- Bottom-right couple logo
+- Login page 3x3 grid photos and captions
+- City landmark images
+
+## License
+
+[MIT](LICENSE)
