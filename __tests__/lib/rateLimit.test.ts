@@ -16,7 +16,9 @@ describe("checkRateLimit", () => {
   it("allows requests within limit", () => {
     const result = checkRateLimit("test-key", 5, 60000);
     expect(result.allowed).toBe(true);
-    expect(result.remaining).toBe(4);
+    if (result.allowed) {
+      expect(result.remaining).toBe(4);
+    }
   });
 
   it("blocks requests over limit", () => {
@@ -27,7 +29,9 @@ describe("checkRateLimit", () => {
 
     const result = checkRateLimit("test-key", 5, 60000);
     expect(result.allowed).toBe(false);
-    expect(result.retryAfterMs).toBeGreaterThan(0);
+    if (!result.allowed) {
+      expect(result.retryAfterMs).toBeGreaterThan(0);
+    }
   });
 
   it("resets after window expires", () => {
@@ -41,7 +45,9 @@ describe("checkRateLimit", () => {
 
     const result = checkRateLimit("test-key", 5, 60000);
     expect(result.allowed).toBe(true);
-    expect(result.remaining).toBe(4);
+    if (result.allowed) {
+      expect(result.remaining).toBe(4);
+    }
   });
 
   it("tracks different keys independently", () => {
