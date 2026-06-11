@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.3.0] - 2026-06-11
+
+### Added
+- TSDoc documentation for all main components and utility modules
+- Province data integrity tests (`provinces.test.ts`) — 34-province validation, lookups, constants
+- Geo/map rendering tests (`geo.test.ts`) — GeoJSON processing, projections, SVG path generation
+- Electron main process tests (`main.test.ts`) — auth config, env setup, port allocation
+
+### Changed
+- Updated dependencies to latest minor/patch versions:
+  - `@supabase/supabase-js` 2.106.0 → 2.108.1
+  - `framer-motion` 12.39.0 → 12.40.0
+  - `lucide-react` 1.16.0 → 1.17.0
+  - `next` 16.2.6 → 16.2.9
+  - `react` / `react-dom` 19.2.4 → 19.2.7
+  - `electron` 42.3.0 → 42.4.0
+  - `electron-builder` 26.8.1 → 26.15.2
+  - `eslint-config-next` 16.2.6 → 16.2.9
+- Version bumped from 0.1.1 to 1.3.0 (aligning with release track)
+
+---
+
 ## [1.2.0] - 2026-06-10
 
 ### Added
@@ -98,6 +120,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| 1.3.0 | 2026-06-11 | TSDoc docs, new tests (provinces/geo/electron), dep updates |
 | 1.2.0 | 2026-06-10 | Open-source release: English docs, CI, templates, LICENSE |
 | 0.1.1 | 2026-06-09 | Bug fixes: rate limit test types, CI simplification |
 | 0.1.0 | 2026-06-08 | Initial release: 34-province map, memories, Electron, testing |

@@ -1,15 +1,24 @@
+/** localStorage key for app settings. */
 export const appSettingsStorageKey = "mapofus:settings";
+/** Custom event name dispatched when settings are written. */
 export const appSettingsUpdatedEvent = "mapofus:settings-updated";
 
 export type { LoginPhotoText } from "@/data/loginPhotoSlots";
 import type { LoginPhotoText } from "@/data/loginPhotoSlots";
 
+/** Persistent app settings stored in localStorage. */
 export type AppSettings = {
+  /** Login page 3x3 grid photo data URLs keyed by slot index. */
   loginPhotos?: Record<string, string>;
+  /** Login page photo caption texts keyed by slot index. */
   loginPhotoTexts?: Record<string, LoginPhotoText>;
+  /** Anniversary date in "YYYY.MM.DD" format. */
   anniversaryDate?: string;
+  /** Anniversary display label (e.g. "我们在一起"). */
   anniversaryLabel?: string;
+  /** Up to 3 city IDs for weather display on the home page. */
   weatherCityIds?: string[];
+  /** Data URL or path for the couple logo in the bottom-right corner. */
   coupleLogo?: string;
 };
 
@@ -18,6 +27,7 @@ export type AppSettings = {
 export const defaultAnniversaryDate = "2025.01.01";
 export const defaultAnniversaryLabel = "我们在一起";
 export const defaultWeatherCityIds = ["beijing", "shanghai", "guangzhou"];
+/** Default maximum number of weather cities. */
 export const maxWeatherCities = 3;
 export const defaultCoupleLogo = "/logo/couple-logo-placeholder.svg";
 
@@ -35,6 +45,7 @@ const cleanString = (value: unknown, maxLength: number): string | undefined => {
   return trimmed.slice(0, maxLength);
 };
 
+/** Read and validate app settings from localStorage. Returns defaults if unavailable or invalid. */
 export const readAppSettings = (): AppSettings => {
   if (typeof window === "undefined") return defaultAppSettings;
 
@@ -92,6 +103,7 @@ export const readAppSettings = (): AppSettings => {
   }
 };
 
+/** Write app settings to localStorage and dispatch an update event. */
 export const writeAppSettings = (settings: AppSettings) => {
   window.localStorage.setItem(appSettingsStorageKey, JSON.stringify(settings));
   window.dispatchEvent(new CustomEvent<AppSettings>(appSettingsUpdatedEvent, { detail: settings }));

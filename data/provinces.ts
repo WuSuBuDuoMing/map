@@ -1,8 +1,14 @@
+/** Represents a Chinese province/region with its administrative code and display metadata. */
 export interface Province {
+  /** URL-safe province identifier (e.g. "beijing", "guangdong"). */
   id: string;
+  /** National administrative division code (GB/T 2260). */
   adcode: number;
+  /** Chinese display name. */
   name: string;
+  /** English display name. */
   nameEn: string;
+  /** Whether the province has been visited (has at least one memory). */
   lit: boolean;
 }
 
@@ -43,8 +49,11 @@ export const provinces: Province[] = [
   { id: "macau", adcode: 820000, name: "澳门", nameEn: "Macau", lit: true },
 ];
 
+/** Total number of provinces/regions in the dataset (34). */
 export const TOTAL_PROVINCES = provinces.length;
+/** Count of provinces currently marked as visited. */
 export const litProvinceCount = provinces.filter((province) => province.lit).length;
 
+/** Look up a province by its URL-safe identifier. Returns `undefined` if not found. */
 export const getProvince = (id: string): Province | undefined =>
   provinces.find((province) => province.id === id);

@@ -5,6 +5,7 @@ import { provinces } from "@/data/provinces";
 type Position = [number, number];
 type Ring = Position[];
 
+/** A GeoJSON Feature with province adcode and name properties. */
 export interface GeoFeature {
   type: "Feature";
   properties: { adcode: number; name: string };
@@ -49,6 +50,7 @@ function fixWinding(feature: GeoFeature): GeoFeature {
 /** Round a coordinate to 3 decimal places for stable SVG rendering. */
 export const stableCoordinate = (value: number) => Number(value.toFixed(3));
 
+/** All valid province features from the GeoJSON source, with corrected winding order. */
 export const chinaFeatures: GeoFeature[] = (rawChina.features as GeoFeature[])
   .filter(
     (feature) =>
@@ -69,9 +71,17 @@ const rawDashLine = (rawChina.features as GeoFeature[]).find(
 
 export const dashLineFeature: GeoFeature | null = rawDashLine ? fixWinding(rawDashLine) : null;
 
+/** Map a province adcode to its URL-safe identifier. */
 export const provinceIdOf = (feature: GeoFeature): string =>
   adcodeToProvinceId.get(feature.properties.adcode) ?? "";
 
+/**
+ * Create a Mercator projection fitted to a single feature (used for province detail maps).
+ * @param feature - GeoJSON feature to fit
+ * @param width - SVG viewport width
+ * @param height - SVG viewport height
+ * @param padding - inset padding in pixels
+ */
 export function makeProjectionForFeature(
   feature: GeoFeature,
   width: number,
@@ -87,6 +97,7 @@ export function makeProjectionForFeature(
   );
 }
 
+/** Create a Mercator projection fitted to all China features (main map view). */
 export function makeProjection(width: number, height: number, padding = 18): GeoProjection {
   return geoMercator().fitExtent(
     [
@@ -100,9 +111,14 @@ export function makeProjection(width: number, height: number, padding = 18): Geo
   );
 }
 
+/** Look up the GeoJSON feature for a province by its URL-safe ID. */
 export const featureOfProvince = (id: string): GeoFeature | undefined =>
   chinaFeatures.find((feature) => provinceIdOf(feature) === id);
 
+/**
+ * Create a Mercator projection for a specific province.
+ * Special-cases Hainan with a custom center and scale.
+ */
 export function makeProjectionForProvince(
   id: string,
   width: number,
@@ -131,6 +147,7 @@ export function makeProjectionForProvince(
   );
 }
 
+/** Create a D3 geo path generator from a projection. */
 export function makePath(projection: GeoProjection) {
   return geoPath(projection);
 }

@@ -59,14 +59,25 @@ const chinaFeatures: GeoFeature[] = (rawChina.features as GeoFeature[])
 const provinceIdOf = (feature: GeoFeature): string =>
   adcodeToProvinceId.get(feature.properties.adcode) ?? "";
 
+/** A precomputed SVG path with its province ID and centroid coordinates. */
 export type MapPathData = {
+  /** URL-safe province identifier. */
   id: string;
+  /** SVG path `d` attribute for the province shape. */
   d: string;
+  /** X coordinate of the province centroid (3 decimal places). */
   cx: number;
+  /** Y coordinate of the province centroid (3 decimal places). */
   cy: number;
 };
 
-// Precomputed China map SVG paths (default width/height match ChinaMap defaults)
+/**
+ * Generate precomputed SVG paths for the full China map (server-side only).
+ * @param width - SVG viewport width (default 1100)
+ * @param height - SVG viewport height (default 860)
+ * @param padding - inset padding in pixels (default 24)
+ * @returns Array of province paths with centroids
+ */
 export function getChinaMapPaths(width = 1100, height = 860, padding = 24): MapPathData[] {
   const projection = geoMercator().fitExtent(
     [
@@ -90,9 +101,13 @@ export function getChinaMapPaths(width = 1100, height = 860, padding = 24): MapP
   });
 }
 
-// Precomputed dash-line path for South China Sea inset
+/** Precomputed dash-line path for the South China Sea inset box. */
 export type DashLinePathData = { d: string } | null;
 
+/**
+ * Generate the SVG path for the South China Sea ten-dash line inset.
+ * Returns `null` if the feature is missing from the GeoJSON source.
+ */
 export function getDashLinePath(): DashLinePathData {
   const rawDashLine = (rawChina.features as GeoFeature[]).find(
     (feature) => String(feature.properties.adcode) === "100000_JD",
@@ -117,13 +132,23 @@ export function getDashLinePath(): DashLinePathData {
   return d ? { d } : null;
 }
 
-// Province map paths -- all provinces rendered, with active highlight info
+/** Province map path data with active state for the focused province. */
 export type ProvinceMapPathData = {
+  /** URL-safe province identifier. */
   id: string;
+  /** SVG path `d` attribute. */
   d: string;
+  /** `true` if this province is the one currently focused. */
   active: boolean;
 };
 
+/**
+ * Generate SVG paths for the province detail map view (server-side only).
+ * @param provinceId - The province to highlight as active
+ * @param width - SVG viewport width (default 1120)
+ * @param height - SVG viewport height (default 760)
+ * @param padding - inset padding in pixels (default 88)
+ */
 export function getProvinceMapPaths(provinceId: string, width = 1120, height = 760, padding = 88): ProvinceMapPathData[] {
   // For hainan, use custom projection settings
   const projection = provinceId === "hainan"
@@ -151,7 +176,15 @@ export function getProvinceMapPaths(provinceId: string, width = 1120, height = 7
   }));
 }
 
-// City projection for province map -- converts lng/lat to SVG coordinates
+/**
+ * Project city coordinates (lng/lat) to SVG pixel positions for a province map.
+ * @param provinceId - The province whose projection to use
+ * @param cities - Array of cities with `id`, `lng`, and `lat`
+ * @param width - SVG viewport width (default 1120)
+ * @param height - SVG viewport height (default 760)
+ * @param padding - inset padding in pixels (default 88)
+ * @returns Projected positions with `id`, `x`, `y`
+ */
 export function projectCitiesForProvince(
   provinceId: string,
   cities: Array<{ id: string; lng: number; lat: number }>,

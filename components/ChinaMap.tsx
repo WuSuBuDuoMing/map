@@ -13,10 +13,15 @@ import { provinces } from "@/data/provinces";
 import { useLocalMemories } from "@/hooks/useLocalMemories";
 import { mapColors as colors } from "@/lib/mapColors";
 
+/** Props for the interactive China map component. */
 interface ChinaMapProps {
+  /** SVG viewport width in pixels (default 1100). */
   width?: number;
+  /** SVG viewport height in pixels (default 860). */
   height?: number;
+  /** Additional CSS class names. */
   className?: string;
+  /** Precomputed province path data from the server (geo-server.ts). */
   mapPaths?: MapPathData[];
 }
 
@@ -26,8 +31,10 @@ const easyTapProvinceIds = new Set(["hongkong", "macau"]);
 const maxZoom = 1.45;
 const minZoom = 1;
 
-// The South China Sea ten-dash line, drawn as a small standalone inset box so it
-// is always visible and never overlapped by floating cards on the main map.
+/**
+ * Inset box rendering the South China Sea ten-dash line.
+ * Displayed as a small standalone SVG in the bottom-right corner.
+ */
 export function SouthChinaSeaInset({ dashLinePath }: { dashLinePath?: DashLinePathData }) {
   if (!dashLinePath?.d) return null;
 
@@ -67,6 +74,11 @@ export function SouthChinaSeaInset({ dashLinePath }: { dashLinePath?: DashLinePa
   );
 }
 
+/**
+ * Interactive China SVG map with zoom/pan controls.
+ * Visited provinces are highlighted with a bloom glow effect.
+ * Clicking a province navigates to its detail page.
+ */
 export default function ChinaMap({ width = 1100, height = 860, className, mapPaths = [] }: ChinaMapProps) {
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const localMemories = useLocalMemories();
