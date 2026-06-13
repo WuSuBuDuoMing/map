@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.4.0] - 2026-06-14
+
+### Changed
+- Local optimization and performance improvements
+- CI workflow fix
+- Type narrowing fixes
+- Documentation updates
+
+---
+
 ## [1.3.0] - 2026-06-11
 
 ### Added
@@ -120,6 +130,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| 1.4.0 | 2026-06-14 | Local optimization, CI workflow fix, type narrowing fixes, docs |
 | 1.3.0 | 2026-06-11 | TSDoc docs, new tests (provinces/geo/electron), dep updates |
 | 1.2.0 | 2026-06-10 | Open-source release: English docs, CI, templates, LICENSE |
 | 0.1.1 | 2026-06-09 | Bug fixes: rate limit test types, CI simplification |
