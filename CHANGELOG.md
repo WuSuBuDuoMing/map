@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.8.0] - 2026-06-16
+
+### Added
+- Code of Conduct (CODE_OF_CONDUCT.md) based on Contributor Covenant v2.1
+- GitHub Sponsors funding configuration (FUNDING.yml)
+- CODEOWNERS file for code review assignments
+- Enhanced Issue and PR templates
+
 ## [1.6.0] - 2026-06-14
 
 ### Added
