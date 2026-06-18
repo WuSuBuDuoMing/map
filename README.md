@@ -428,6 +428,16 @@ With admin mode enabled in Settings, you can customize:
 - Login page 3x3 grid photos and captions
 - City landmark images
 
+## Contributing
+
+Contributions are welcome! Please read the [Contributing Guide](CONTRIBUTING.md) for details on our code of conduct, development setup, and the process for submitting pull requests.
+
+Please note that this project is released with a [Code of Conduct](CODE_OF_CONDUCT.md). By participating in this project you agree to abide by its terms.
+
+## Security
+
+For details on reporting vulnerabilities, please see our [Security Policy](SECURITY.md).
+
 ## License
 
-[MIT](LICENSE)
+[MIT](LICENSE) -- Copyright (c) 2024-2026 WuSuBuDuoMing

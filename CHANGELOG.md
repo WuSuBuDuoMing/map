@@ -7,6 +7,44 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.11.0] - 2026-06-18
+
+### Added
+- Comprehensive TSDoc annotations for `lib/server/auth.ts` (module-level doc, all exported functions)
+- Contributing guide link, Code of Conduct link, and Security policy link in README.md
+- Release automation workflow (`.github/workflows/release.yml`) for building installers on `v*` tag push
+
+### Changed
+- README.md enhanced with Contributing, Security, and License sections
+- Version bumped to 1.11.0
+
+---
+
+## [1.10.0] - 2026-06-17
+
+### Added
+- Standardized API response helpers (`lib/server/apiResponse.ts`) with typed error codes
+- Rate limiting module (`lib/server/rateLimit.ts`) for API endpoint protection
+
+### Changed
+- CI workflow updated to use `npm install` instead of `npm ci` for broader compatibility
+- Documentation improvements across multiple modules
+
+---
+
+## [1.9.0] - 2026-06-17
+
+### Added
+- Performance benchmarking scripts (`perf:source`, `perf:css`, `perf:bundle`, `perf:api`, `perf:storage`, `perf:electron`)
+- Privacy mode image replacement module (`lib/localPrivacy.ts`)
+- Date normalization utilities (`lib/dateUtils.ts`)
+
+### Changed
+- Component refactoring: `ProvinceMap`, `HomeProgress`, `MemoryTools` split into submodules with barrel exports
+- Shared module documentation expanded in README.md
+
+---
+
 ## [1.8.0] - 2026-06-16
 
 ### Added
@@ -147,6 +185,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| 1.11.0 | 2026-06-18 | TSDoc annotations, README enhancements, release automation workflow |
+| 1.10.0 | 2026-06-17 | API response helpers, rate limiting, CI improvements |
+| 1.9.0 | 2026-06-17 | Performance benchmarks, privacy mode, component refactoring |
+| 1.8.0 | 2026-06-16 | Code of Conduct, FUNDING, CODEOWNERS, issue/PR templates |
 | 1.6.0 | 2026-06-14 | Security policy, documentation enhancements, open-source best practices |
 | 1.4.0 | 2026-06-14 | Local optimization, CI workflow fix, type narrowing fixes, docs |
 | 1.3.0 | 2026-06-11 | TSDoc docs, new tests (provinces/geo/electron), dep updates |

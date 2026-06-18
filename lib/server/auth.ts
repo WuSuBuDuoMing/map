@@ -1,6 +1,18 @@
+/**
+ * HMAC-SHA256 cookie-based authentication for Map of Us.
+ *
+ * Provides dual-layer auth (site password + admin password) with:
+ * - Timing-safe password comparison to prevent timing attacks
+ * - HMAC-SHA256 signed cookies with configurable expiration
+ * - Automatic cookie rotation on authentication
+ *
+ * @module lib/server/auth
+ */
+
 import { createHmac, timingSafeEqual } from "crypto";
 import { NextResponse, type NextRequest } from "next/server";
 
+/** The two authentication roles supported by the application. */
 export type AuthRole = "site" | "admin";
 
 const siteCookieName = "mapofus_session";
@@ -78,6 +90,12 @@ const verifyToken = (token?: string): AuthRole | null => {
   return payload.role;
 };
 
+/**
+ * Returns a list of missing auth-related environment variables.
+ *
+ * @param includePasswords - Whether to also check for `SITE_PASSWORD` and `ADMIN_PASSWORD`.
+ * @returns Array of missing variable names (empty if all present).
+ */
 export const getMissingAuthEnv = (includePasswords = false) => {
   const missing: string[] = [];
 
@@ -88,6 +106,14 @@ export const getMissingAuthEnv = (includePasswords = false) => {
   return missing;
 };
 
+/**
+ * Verify a plaintext password against the stored value for the given role.
+ * Uses timing-safe comparison to prevent timing attacks.
+ *
+ * @param role - The authentication role (`"site"` or `"admin"`).
+ * @param password - The plaintext password to verify.
+ * @returns `true` if the password matches, `false` otherwise.
+ */
 export const verifyPassword = (role: AuthRole, password: string) => {
   const expected = getPassword(role);
   if (!expected) return false;
@@ -95,6 +121,14 @@ export const verifyPassword = (role: AuthRole, password: string) => {
   return safeEqual(password, expected);
 };
 
+/**
+ * Extract the authenticated role from the request cookies.
+ * Returns `"admin"` if an admin cookie is valid, `"site"` if a site cookie
+ * is valid, or `null` if no valid session exists.
+ *
+ * @param request - The incoming Next.js request.
+ * @returns The authenticated role or `null`.
+ */
 export const getAuthRole = (request: NextRequest): AuthRole | null => {
   const adminRole = verifyToken(request.cookies.get(adminCookieName)?.value);
   if (adminRole === "admin") return "admin";
@@ -102,14 +136,20 @@ export const getAuthRole = (request: NextRequest): AuthRole | null => {
   return verifyToken(request.cookies.get(siteCookieName)?.value);
 };
 
+/** Check if the request carries a valid site-level session. */
 export const hasSiteSession = (request: NextRequest) => {
   const role = getAuthRole(request);
 
   return role === "site" || role === "admin";
 };
 
+/** Check if the request carries a valid admin-level session. */
 export const hasAdminSession = (request: NextRequest) => getAuthRole(request) === "admin";
 
+/**
+ * Middleware guard that returns a 401/503 response if no valid site session exists.
+ * Returns `null` if the request is authorized.
+ */
 export const requireSiteSession = (request: NextRequest) => {
   if (getMissingAuthEnv().length > 0) {
     return NextResponse.json({ error: "Authentication is not configured" }, { status: 503 });
@@ -122,6 +162,10 @@ export const requireSiteSession = (request: NextRequest) => {
   return null;
 };
 
+/**
+ * Middleware guard that returns a 403/503 response if no valid admin session exists.
+ * Returns `null` if the request is authorized.
+ */
 export const requireAdminSession = (request: NextRequest) => {
   if (getMissingAuthEnv().length > 0) {
     return NextResponse.json({ error: "Authentication is not configured" }, { status: 503 });
@@ -134,6 +178,13 @@ export const requireAdminSession = (request: NextRequest) => {
   return null;
 };
 
+/**
+ * Set authentication cookies on the response.
+ * Always sets a site cookie; additionally sets an admin cookie when `role` is `"admin"`.
+ *
+ * @param response - The Next.js response to attach cookies to.
+ * @param role - The authentication role granted.
+ */
 export const setAuthCookies = (response: NextResponse, role: AuthRole) => {
   const siteToken = createToken("site");
   if (siteToken) {
@@ -160,6 +211,12 @@ export const setAuthCookies = (response: NextResponse, role: AuthRole) => {
   });
 };
 
+/**
+ * Clear authentication cookies on the response.
+ *
+ * @param response - The Next.js response to clear cookies from.
+ * @param role - Which cookies to clear: `"site"`, `"admin"`, or `"all"` (default).
+ */
 export const clearAuthCookies = (response: NextResponse, role: AuthRole | "all" = "all") => {
   if (role === "site" || role === "all") response.cookies.delete(siteCookieName);
   if (role === "admin" || role === "all") response.cookies.delete(adminCookieName);
