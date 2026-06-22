@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.12.0] - 2026-06-22
+
+### Added
+- Comprehensive TSDoc annotations for all `lib/` modules (`geo.ts`, `geo-server.ts`, `localPrivacy.ts`, `imageUtils.ts`, `typeGuards.ts`, `dateUtils.ts`, `mapColors.ts`) and `lib/server/` modules (`dataDir.ts`, `supabase.ts`, `rateLimit.ts`, `apiResponse.ts`)
+- TSDoc annotations for all `components/` files (`ChinaMapData.tsx`, `ErrorBoundary.tsx`, `LocalPrivacyImage.tsx`, `BackToLoginButton.tsx`, `RandomPhotoCard.tsx`, `RecentMemories.tsx`, `MemoryNav.tsx`)
+- TSDoc annotations for all `data/` modules (`cities-index.ts`, `adminMode.ts`, `loginPhotoStore.ts`, `provinceCityPlaces.ts`, `memories.ts`, `memoryUtils.ts`)
+- New test suite for `data/memoryUtils.ts` (merge, dedup, draft exclusion)
+- New test suite for `data/provinceCityPlaces.ts` (province lookups, city counts, unvisited filtering)
+- New test suite for `data/memories.ts` (memoryTime, sortMemoriesByTime, getLatestMemory, seed data)
+- New test suite for `lib/imageUtils.ts` (data URL, https URL, server path detection)
+- New test suite for `lib/typeGuards.ts` (isRecord plain-object detection)
+- New test suite for `lib/localPrivacy.ts` (privacy request detection, placeholder path)
+- Expanded Vitest coverage config to include all `lib/**/*.ts` and `data/**/*.ts`
+
+### Changed
+- Performance: `ChinaMap.tsx` -- memoised `hoveredPath` lookup and `zoomProgress` computation to avoid redundant recalculation
+- Performance: `ChinaMap.tsx` -- wrapped `SouthChinaSeaInset` in `React.memo` to skip re-render when `dashLinePath` is unchanged
+- Performance: `ChinaMap.tsx` -- stabilised `goProvince` handler with `useCallback` to reduce child re-renders
+- Version bumped to 1.12.0
+
+---
+
 ## [1.11.0] - 2026-06-18
 
 ### Added
@@ -185,6 +207,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| 1.12.0 | 2026-06-22 | TSDoc for all lib/components/data modules, 6 new test suites, map rendering performance |
 | 1.11.0 | 2026-06-18 | TSDoc annotations, README enhancements, release automation workflow |
 | 1.10.0 | 2026-06-17 | API response helpers, rate limiting, CI improvements |
 | 1.9.0 | 2026-06-17 | Performance benchmarks, privacy mode, component refactoring |

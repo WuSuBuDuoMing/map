@@ -1,12 +1,32 @@
+/**
+ * React error boundary component.
+ *
+ * Catches rendering errors in its child tree and displays a fallback UI
+ * with an error message and a retry button. If no custom `fallback` prop
+ * is provided, a default Chinese-language error card is rendered.
+ *
+ * @module components/ErrorBoundary
+ */
+
 "use client";
 
 import React from "react";
 
+/** Internal state tracking whether an error has been caught. */
 type ErrorBoundaryState = {
   hasError: boolean;
   error: Error | null;
 };
 
+/**
+ * Error boundary that catches rendering errors in its child tree.
+ * @example
+ * ```tsx
+ * <ErrorBoundary fallback={<div>Something went wrong</div>}>
+ *   <MyComponent />
+ * </ErrorBoundary>
+ * ```
+ */
 export class ErrorBoundary extends React.Component<
   { children: React.ReactNode; fallback?: React.ReactNode },
   ErrorBoundaryState

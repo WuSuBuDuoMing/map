@@ -1,3 +1,12 @@
+/**
+ * Privacy-aware image components that conditionally replace user photos
+ * with a placeholder SVG when running on a local network hostname.
+ *
+ * Currently disabled for personal use -- the hostname allowlist is always empty.
+ *
+ * @module components/LocalPrivacyImage
+ */
+
 "use client";
 
 import Image from "next/image";

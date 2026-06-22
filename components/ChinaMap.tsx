@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, type CSSProperties } from "react";
+import { memo, useCallback, useMemo, useState, type CSSProperties } from "react";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { Minus, Plus, RotateCcw } from "lucide-react";
@@ -35,7 +35,7 @@ const minZoom = 1;
  * Inset box rendering the South China Sea ten-dash line.
  * Displayed as a small standalone SVG in the bottom-right corner.
  */
-export function SouthChinaSeaInset({ dashLinePath }: { dashLinePath?: DashLinePathData }) {
+export const SouthChinaSeaInset = memo(function SouthChinaSeaInset({ dashLinePath }: { dashLinePath?: DashLinePathData }) {
   if (!dashLinePath?.d) return null;
 
   const insetWidth = 116;
@@ -72,7 +72,7 @@ export function SouthChinaSeaInset({ dashLinePath }: { dashLinePath?: DashLinePa
       </svg>
     </div>
   );
-}
+});
 
 /**
  * Interactive China SVG map with zoom/pan controls.
@@ -102,15 +102,21 @@ export default function ChinaMap({ width = 1100, height = 860, className, mapPat
     [mapPaths, litProvinceIds],
   );
 
-  const hoveredPath = paths.find((path) => path.id === hoveredId);
-  const zoomProgress = ((zoom - minZoom) / (maxZoom - minZoom)) * 100;
+  const hoveredPath = useMemo(
+    () => paths.find((path) => path.id === hoveredId),
+    [paths, hoveredId],
+  );
+  const zoomProgress = useMemo(
+    () => ((zoom - minZoom) / (maxZoom - minZoom)) * 100,
+    [zoom],
+  );
   const setClampedZoom = (nextZoom: number) => {
     setZoom(Math.min(Math.max(nextZoom, minZoom), maxZoom));
   };
 
-  const goProvince = (id: string) => {
+  const goProvince = useCallback((id: string) => {
     router.push(`/province/${id}`);
-  };
+  }, [router]);
 
   return (
     <motion.div

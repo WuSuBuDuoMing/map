@@ -17,8 +17,8 @@ export default defineConfig({
       provider: "v8",
       include: [
         "app/api/**/*.ts",
-        "lib/server/auth.ts",
-        "lib/server/supabase.ts",
+        "lib/**/*.ts",
+        "data/**/*.ts",
       ],
     },
     // Give file-system and Supabase-mock tests time on Windows

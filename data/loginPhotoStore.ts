@@ -1,3 +1,14 @@
+/**
+ * Login page photo storage client.
+ *
+ * Manages the 3x3 grid of photos shown on the login (pre-auth) screen.
+ * Handles migration from legacy IndexedDB storage to the server-side API,
+ * and provides CRUD helpers for photos and their caption texts.
+ *
+ * @module data/loginPhotoStore
+ */
+
+/** Custom event name dispatched when login photos are updated. */
 export const loginPhotosUpdatedEvent = "mapofus:login-photos-updated";
 
 export type { LoginPhotoText } from "@/data/loginPhotoSlots";

@@ -1,3 +1,13 @@
+/**
+ * Random photo card component for the home page sidebar.
+ *
+ * Displays a random photo from the user's memories in a tilted card layout.
+ * Includes a shuffle button to cycle through photos, and links to the
+ * originating city's province detail page.
+ *
+ * @module components/RandomPhotoCard
+ */
+
 "use client";
 
 import Link from "next/link";

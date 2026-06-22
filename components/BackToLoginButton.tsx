@@ -1,3 +1,13 @@
+/**
+ * Back-to-login button component.
+ *
+ * Clears the current auth session via `DELETE /api/auth/login` and navigates
+ * the user back to the password entry screen. Used on authenticated pages to
+ * allow the user to lock the app.
+ *
+ * @module components/BackToLoginButton
+ */
+
 "use client";
 
 import { useState } from "react";

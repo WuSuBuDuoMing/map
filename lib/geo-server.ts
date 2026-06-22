@@ -1,3 +1,14 @@
+/**
+ * Server-side geographic projection and SVG path pre-computation.
+ *
+ * This module runs exclusively on the server (SSR / RSC) to pre-compute SVG
+ * path data for the China map and province detail maps. By computing projections
+ * and paths at build/request time, the client receives lightweight SVG attributes
+ * (`d`, `cx`, `cy`) instead of bundling D3-geo.
+ *
+ * @module lib/geo-server
+ */
+
 import { geoArea, geoMercator, geoPath } from "d3-geo";
 import rawChina from "@/data/china-geo.json";
 import { provinces } from "@/data/provinces";
@@ -6,6 +17,7 @@ import { stableCoordinate } from "@/lib/geo";
 type Position = [number, number];
 type Ring = Position[];
 
+/** GeoJSON Feature representation matching the china-geo.json structure. */
 export interface GeoFeature {
   type: "Feature";
   properties: { adcode: number; name: string };
@@ -17,6 +29,10 @@ export interface GeoFeature {
 
 const adcodeToProvinceId = new Map(provinces.map((province) => [province.adcode, province.id]));
 
+/**
+ * Correct the winding order of a GeoJSON feature's coordinates.
+ * Required because D3-geo assumes exterior rings are counter-clockwise.
+ */
 function fixWinding(feature: GeoFeature): GeoFeature {
   if (geoArea(feature as never) <= 2 * Math.PI) return feature;
 
@@ -56,6 +72,7 @@ const chinaFeatures: GeoFeature[] = (rawChina.features as GeoFeature[])
   )
   .map(fixWinding);
 
+/** Map a province adcode to its URL-safe identifier. */
 const provinceIdOf = (feature: GeoFeature): string =>
   adcodeToProvinceId.get(feature.properties.adcode) ?? "";
 

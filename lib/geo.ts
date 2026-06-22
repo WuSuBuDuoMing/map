@@ -1,3 +1,13 @@
+/**
+ * Client-side geographic projection and path utilities.
+ *
+ * This module provides D3-geo projection helpers for rendering the interactive
+ * China map and per-province detail maps in the browser. It handles GeoJSON
+ * feature loading, winding order correction, and Mercator projection fitting.
+ *
+ * @module lib/geo
+ */
+
 import { geoArea, geoMercator, geoPath, type GeoProjection } from "d3-geo";
 import rawChina from "@/data/china-geo.json";
 import { provinces } from "@/data/provinces";
@@ -17,6 +27,11 @@ export interface GeoFeature {
 
 const adcodeToProvinceId = new Map(provinces.map((province) => [province.adcode, province.id]));
 
+/**
+ * Correct the winding order of a GeoJSON feature's coordinates.
+ * D3-geo requires exterior rings to be counter-clockwise; if the ring covers
+ * more than 2*PI steradians the winding is reversed and must be corrected.
+ */
 function fixWinding(feature: GeoFeature): GeoFeature {
   if (geoArea(feature as never) <= 2 * Math.PI) return feature;
 

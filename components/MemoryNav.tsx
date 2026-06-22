@@ -1,3 +1,13 @@
+/**
+ * Navigation sidebar and page shell for authenticated pages.
+ *
+ * Provides a left sidebar with app branding, navigation links (map, memories,
+ * favorites, anniversaries, time capsule, settings), and an "About" card.
+ * The `MemoryPageShell` wrapper composes the sidebar with a main content area.
+ *
+ * @module components/MemoryNav
+ */
+
 "use client";
 
 import Link from "next/link";

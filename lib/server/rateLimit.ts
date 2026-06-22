@@ -1,6 +1,11 @@
 /**
  * Simple in-memory rate limiter for API endpoints.
+ *
  * Tracks request counts per IP address within a sliding window.
+ * Uses a `Map`-based store with automatic cleanup of expired entries
+ * every 5 minutes to prevent memory leaks.
+ *
+ * @module lib/server/rateLimit
  */
 
 type RateLimitEntry = {

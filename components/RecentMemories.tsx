@@ -1,3 +1,12 @@
+/**
+ * Recent memories list component for the home page.
+ *
+ * Shows up to 3 randomly selected memories with thumbnail, city name,
+ * date, and text preview. Each item links to the originating city.
+ *
+ * @module components/RecentMemories
+ */
+
 "use client";
 
 import Link from "next/link";
