@@ -88,19 +88,124 @@ After logging in, change them immediately under **Settings > Password Settings**
 
 ## Installation & First Launch (End Users)
 
-This app is not code-signed or notarized on macOS. You need to manually allow it to run on the first launch -- this is a one-time step.
+Download the latest release from [GitHub Releases](https://github.com/WuSuBuDuoMing/map/releases).
 
 ### macOS
 
-1. Double-click the `.dmg` file and drag **Map of Us** into Applications
-2. **Right-click > Open**, then click **Open** in the dialog
-3. If there is no Open option: go to **System Settings > Privacy & Security**, find the Map of Us prompt, and click **Open Anyway**
-4. If you see "App is damaged": run `xattr -cr "/Applications/Map of Us.app"` in Terminal
+1. Download the `.dmg` file from [Releases](https://github.com/WuSuBuDuoMing/map/releases)
+2. Double-click the `.dmg` file and drag **Map of Us** into **Applications**
+3. **Right-click > Open**, then click **Open** in the dialog
+4. If there is no Open option: go to **System Settings > Privacy & Security**, find the Map of Us prompt, and click **Open Anyway**
+5. If you see "App is damaged": run `xattr -cr "/Applications/Map of Us.app"` in Terminal
+
+> **Note:** This app is not code-signed or notarized on macOS. You need to manually allow it to run on the first launch -- this is a one-time step.
 
 ### Windows
 
-1. Run the `-Setup.exe` installer
-2. If a SmartScreen warning appears: click **More info > Run anyway**
+1. Download the `-Setup.exe` installer from [Releases](https://github.com/WuSuBuDuoMing/map/releases)
+2. Run the installer and follow the on-screen instructions
+3. If a SmartScreen warning appears: click **More info > Run anyway**
+
+### Linux
+
+Download the appropriate format from [Releases](https://github.com/WuSuBuDuoMing/map/releases):
+
+- **AppImage** (recommended -- works on most distributions):
+  ```bash
+  chmod +x Map-of-Us-*-x64.AppImage
+  ./Map-of-Us-*-x64.AppImage
+  ```
+- **Debian/Ubuntu** (`.deb` package):
+  ```bash
+  sudo dpkg -i Map-of-Us-*-x64.deb
+  map-of-us  # or find it in your application menu
+  ```
+
+### Docker (Web Version)
+
+Run the web version in Docker -- perfect for self-hosting on a server or NAS.
+
+**Using docker-compose (recommended):**
+
+```bash
+# Clone the repository
+git clone https://github.com/WuSuBuDuoMing/map.git
+cd map
+
+# Start the container
+docker compose up -d
+
+# Check status
+docker compose logs -f
+```
+
+The app will be available at `http://localhost:3002`.
+
+**Using docker run:**
+
+```bash
+# Build the image
+docker build -t map-of-us .
+
+# Run the container
+docker run -d \
+  --name map-of-us \
+  -p 3002:3002 \
+  -v map-of-us-data:/app/data \
+  --restart unless-stopped \
+  map-of-us
+```
+
+**Customizing environment variables:**
+
+```bash
+# Override default passwords
+docker compose up -d -e SITE_PASSWORD=mypassword -e ADMIN_PASSWORD=myadmin
+
+# Or with Supabase for web storage
+docker compose up -d \
+  -e SUPABASE_URL=https://your-project.supabase.co \
+  -e SUPABASE_SERVICE_ROLE_KEY=your-key
+```
+
+**Persistent data:** User data is stored in a Docker volume (`map-of-us-data`). To back up:
+
+```bash
+# Export data
+docker run --rm -v map-of-us-data:/data -v $(pwd):/backup alpine tar czf /backup/map-of-us-backup.tar.gz -C /data .
+
+# Import data
+docker run --rm -v map-of-us-data:/data -v $(pwd):/backup alpine tar xzf /backup/map-of-us-backup.tar.gz -C /data
+```
+
+### Build from Source
+
+```bash
+# Clone the repository
+git clone https://github.com/WuSuBuDuoMing/map.git
+cd map
+
+# Install dependencies
+npm install
+
+# Option A: Web development mode
+cp .env.example .env.local   # optional
+npm run dev
+# Open http://localhost:3002
+
+# Option B: Electron desktop mode
+npm run desktop
+
+# Option C: Build desktop installers
+npm run dist:mac     # macOS DMG
+npm run dist:win     # Windows NSIS installer
+npm run dist:linux   # Linux AppImage + .deb
+
+# Option D: Quick verify (no packaging)
+npm run dist:dir
+```
+
+See [Prerequisites](#prerequisites) below for Node.js version requirements.
 
 ## Project Structure
 
@@ -375,12 +480,24 @@ npm run desktop:prepare
 # 2. Build installers
 npm run dist:mac    # macOS DMG
 npm run dist:win    # Windows NSIS installer
+npm run dist:linux  # Linux AppImage + .deb
 
-# Quick verification (no DMG/EXE packaging)
+# Quick verification (no DMG/EXE/AppImage packaging)
 npm run dist:dir
 ```
 
 Output artifacts are placed in the `dist/` directory. Cross-compilation (building Windows installers on macOS) is possible, but it is recommended to verify on the target platform before publishing.
+
+### Docker Build
+
+```bash
+# Build and run with docker-compose
+docker compose up -d --build
+
+# Or build manually
+docker build -t map-of-us .
+docker run -d -p 3002:3002 -v map-of-us-data:/app/data map-of-us
+```
 
 Currently, the packaging does not include a production application icon or developer signing. Certificates and notarization are required before public distribution.
 
@@ -394,7 +511,7 @@ The project uses GitHub Actions for continuous integration and release automatio
 checkout -> Node 20 -> npm ci -> tsc --noEmit -> lint -> test -> build
 ```
 
-**On pushing a `v*` tag:** The release workflow builds macOS and Windows installers and creates a GitHub Release (draft).
+**On pushing a `v*` tag:** The release workflow builds macOS, Windows, and Linux installers and creates a GitHub Release (draft).
 
 ```bash
 # Trigger a release
@@ -409,6 +526,8 @@ git push origin v0.2.0
 | Browser (dev) | `data/localMemories.private.json` (project root) |
 | Desktop (macOS) | `~/Library/Application Support/Map of Us/data` |
 | Desktop (Windows) | `%APPDATA%/Map of Us/data` |
+| Desktop (Linux) | `~/.config/Map of Us/data` |
+| Docker | `/app/data` (volume: `map-of-us-data`) |
 
 ## Backup & Restore
 

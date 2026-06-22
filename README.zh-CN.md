@@ -80,19 +80,127 @@ npm run desktop
 
 ## 安装与首次打开（给使用者）
 
-本应用未做苹果付费签名和公证，首次打开需要手动放行，**只需做一次**。
+从 [GitHub Releases](https://github.com/WuSuBuDuoMing/map/releases) 下载最新版本。
 
 ### macOS
 
-1. 双击 `.dmg` 文件，将 **Map of Us** 拖进「应用程序」
-2. **右键 -> 打开**，弹窗中再次点击 **打开**
-3. 若没有「打开」选项：**系统设置 -> 隐私与安全性**，找到 Map of Us 提示，点 **仍要打开**
-4. 若提示「已损坏」：终端运行 `xattr -cr "/Applications/Map of Us.app"`
+1. 从 [Releases](https://github.com/WuSuBuDuoMing/map/releases) 下载 `.dmg` 文件
+2. 双击 `.dmg` 文件，将 **Map of Us** 拖进「应用程序」
+3. **右键 -> 打开**，弹窗中再次点击 **打开**
+4. 若没有「打开」选项：**系统设置 -> 隐私与安全性**，找到 Map of Us 提示，点 **仍要打开**
+5. 若提示「已损坏」：终端运行 `xattr -cr "/Applications/Map of Us.app"`
+
+> **说明：** 本应用未做苹果付费签名和公证，首次打开需要手动放行，**只需做一次**。
 
 ### Windows
 
-1. 运行 `-Setup.exe` 安装
-2. 若出现 SmartScreen 提示：点 **更多信息 -> 仍要运行**
+1. 从 [Releases](https://github.com/WuSuBuDuoMing/map/releases) 下载 `-Setup.exe` 安装包
+2. 运行安装包，按提示完成安装
+3. 若出现 SmartScreen 提示：点 **更多信息 -> 仍要运行**
+
+### Linux
+
+从 [Releases](https://github.com/WuSuBuDuoMing/map/releases) 下载对应格式：
+
+- **AppImage**（推荐 -- 适用于大多数发行版）：
+
+  ```bash
+  chmod +x Map-of-Us-*-x64.AppImage
+  ./Map-of-Us-*-x64.AppImage
+  ```
+
+- **Debian/Ubuntu**（`.deb` 包）：
+
+  ```bash
+  sudo dpkg -i Map-of-Us-*-x64.deb
+  map-of-us  # 或在应用程序菜单中找到
+  ```
+
+### Docker（Web 版本）
+
+使用 Docker 运行 Web 版本 -- 适合自部署到服务器或 NAS。
+
+**使用 docker-compose（推荐）：**
+
+```bash
+# 克隆仓库
+git clone https://github.com/WuSuBuDuoMing/map.git
+cd map
+
+# 启动容器
+docker compose up -d
+
+# 查看日志
+docker compose logs -f
+```
+
+访问 `http://localhost:3002` 即可使用。
+
+**使用 docker run：**
+
+```bash
+# 构建镜像
+docker build -t map-of-us .
+
+# 运行容器
+docker run -d \
+  --name map-of-us \
+  -p 3002:3002 \
+  -v map-of-us-data:/app/data \
+  --restart unless-stopped \
+  map-of-us
+```
+
+**自定义环境变量：**
+
+```bash
+# 覆盖默认密码
+docker compose up -d -e SITE_PASSWORD=mypassword -e ADMIN_PASSWORD=myadmin
+
+# 使用 Supabase Web 存储
+docker compose up -d \
+  -e SUPABASE_URL=https://your-project.supabase.co \
+  -e SUPABASE_SERVICE_ROLE_KEY=your-key
+```
+
+**数据持久化：** 用户数据存储在 Docker 卷（`map-of-us-data`）中。备份方法：
+
+```bash
+# 导出数据
+docker run --rm -v map-of-us-data:/data -v $(pwd):/backup alpine tar czf /backup/map-of-us-backup.tar.gz -C /data .
+
+# 导入数据
+docker run --rm -v map-of-us-data:/data -v $(pwd):/backup alpine tar xzf /backup/map-of-us-backup.tar.gz -C /data
+```
+
+### 从源码构建
+
+```bash
+# 克隆仓库
+git clone https://github.com/WuSuBuDuoMing/map.git
+cd map
+
+# 安装依赖
+npm install
+
+# 方式 A：Web 开发模式
+cp .env.example .env.local   # 可选
+npm run dev
+# 打开 http://localhost:3002
+
+# 方式 B：Electron 桌面模式
+npm run desktop
+
+# 方式 C：构建桌面安装包
+npm run dist:mac     # macOS DMG
+npm run dist:win     # Windows NSIS 安装包
+npm run dist:linux   # Linux AppImage + .deb
+
+# 方式 D：快速验证（不打包）
+npm run dist:dir
+```
+
+Node.js 版本要求请参见下方「前置条件」。
 
 ## 开发指南
 
@@ -319,12 +427,24 @@ npm run desktop:prepare
 # 2. 生成安装包
 npm run dist:mac    # macOS DMG
 npm run dist:win    # Windows NSIS 安装包
+npm run dist:linux  # Linux AppImage + .deb
 
-# 快速验证（不打包 DMG/EXE）
+# 快速验证（不打包 DMG/EXE/AppImage）
 npm run dist:dir
 ```
 
 产物输出到 `dist/` 目录。在 macOS 上可交叉编译 Windows 安装包，但最终发布前建议在目标平台验证。
+
+### Docker 构建
+
+```bash
+# 使用 docker-compose 构建并运行
+docker compose up -d --build
+
+# 或手动构建
+docker build -t map-of-us .
+docker run -d -p 3002:3002 -v map-of-us-data:/app/data map-of-us
+```
 
 当前打包未配置正式应用图标和开发者签名，公开分发前需要配置证书和公证。
 
@@ -333,6 +453,8 @@ npm run dist:dir
 - **浏览器开发**: `data/localMemories.private.json` 等
 - **桌面打包 (macOS)**: `~/Library/Application Support/Map of Us/data`
 - **桌面打包 (Windows)**: `%APPDATA%/Map of Us/data`
+- **桌面打包 (Linux)**: `~/.config/Map of Us/data`
+- **Docker**: `/app/data`（卷：`map-of-us-data`）
 
 ## 备份与迁移
 
@@ -410,7 +532,7 @@ npm run dist:dir
 checkout -> Node 20 -> npm ci -> tsc --noEmit -> lint -> test -> build
 ```
 
-**推送 `v*` tag 时**，Release 流水线自动构建 macOS 和 Windows 安装包，并创建 GitHub Release（draft）。
+**推送 `v*` tag 时**，Release 流水线自动构建 macOS、Windows 和 Linux 安装包，并创建 GitHub Release（draft）。
 
 ```bash
 # 触发发布

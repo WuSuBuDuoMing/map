@@ -1,0 +1,56 @@
+# Dependencies
+node_modules
+npm-debug.log*
+
+# Next.js
+.next
+!.next/standalone
+!.next/static
+
+# Build output
+dist
+
+# Git
+.git
+.gitignore
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Environment files (mount at runtime instead)
+.env
+.env.local
+.env.*.local
+
+# Docker
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+
+# Docs and config
+README*.md
+LICENSE
+CONTRIBUTING.md
+CODE_OF_CONDUCT.md
+SECURITY.md
+AGENTS.md
+CLAUDE.md
+*.md
+
+# Tests
+__tests__
+vitest.config.ts
+
+# Private data (mount as volume at runtime)
+data/*.private.json
+
+# Electron (not needed for web deployment)
+electron
+build

@@ -20,6 +20,7 @@
     "dist:dir": "npm run desktop:prepare && electron-builder --dir",
     "dist:mac": "npm run desktop:prepare && electron-builder --mac dmg",
     "dist:win": "npm run desktop:prepare && electron-builder --win nsis --x64",
+    "dist:linux": "npm run desktop:prepare && electron-builder --linux AppImage deb --x64",
     "perf:source": "node scripts/perf-source-metrics.mjs",
     "perf:css": "node scripts/perf-css-metrics.mjs",
     "perf:bundle": "node scripts/perf-bundle-analyze.mjs",
@@ -63,6 +64,17 @@
       "perMachine": false,
       "allowToChangeInstallationDirectory": true,
       "artifactName": "${productName}-${version}-${arch}-Setup.${ext}"
+    },
+    "linux": {
+      "category": "Office",
+      "target": [
+        "AppImage",
+        "deb"
+      ],
+      "artifactName": "${productName}-${version}-${arch}.${ext}"
+    },
+    "appImage": {
+      "artifactName": "${productName}-${version}-${arch}.${ext}"
     }
   },
   "dependencies": {
