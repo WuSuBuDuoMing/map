@@ -12,7 +12,7 @@ import {
   recentTimelineMemories,
   getLatestMemory,
 } from "@/data/memories";
-import type { Memory } from "@/data/memories";
+
 
 describe("data/memories", () => {
   // =========================================================================
